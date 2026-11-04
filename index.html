@@ -252,7 +252,7 @@ html,body{background:#071a36!important;overscroll-behavior:none}
 .software-timer-choose,.software-timer-buttons{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:9px;margin:12px 0}
 .software-timer-choose select{padding:8px;border:1px solid #9cbde2;border-radius:6px}.software-timer-buttons button{padding:8px 12px}
 
-/* v0.6.2 個人磁碟：iPhone 友善的資料夾、文件、捷徑管理 */
+/* v0.6.3 個人磁碟：iPhone 友善的資料夾、文件、捷徑管理 */
 .personal-toolbar{flex-wrap:wrap;gap:5px;padding:7px}.personal-toolbar button,.personal-import-button,.personal-backup-bar button{border:1px solid #9db8d9;border-radius:5px;background:linear-gradient(#fff,#e4eefc);padding:7px 9px;color:#234c7c;font-size:12px;cursor:pointer;white-space:nowrap}
 .personal-nav-toolbar{padding-bottom:4px!important;border-bottom:1px solid #a6bddc;gap:6px!important}
 .personal-nav-toolbar button{font-weight:700;min-height:31px}
@@ -444,7 +444,8 @@ function installSoftware(id){
 function uninstallSoftware(id){
  const info=softwareCatalog.find(x=>x.id===id);
  if(!info||!installedSoftware.has(id))return;
- installedSoftware.delete(id);delete shortcutFolders[id];
+ installedSoftware.delete(id);const priorShortcut=shortcutFolders[id];delete shortcutFolders[id];
+ if(!savePersonalData()){installedSoftware.add(id);if(priorShortcut)shortcutFolders[id]=priorShortcut;personalData={version:1,folders,files,bin,installed:[...installedSoftware],shortcutFolders};toast('儲存失敗，軟體尚未解除安裝');return}
  closeWin(id,true);delete desktopIconPositions[id];
  // 移除軟體時也清除本次使用資料，避免重新安裝讀到舊資料。
  if(id==='sticky')softwareState.sticky='';
@@ -454,7 +455,7 @@ function uninstallSoftware(id){
   softwareTimerResumeOnWake=false;
   stopSoftwareTimerPolling();
  }
- savePersonalData();refreshPersonalUI();
+ refreshPersonalUI();
  toast(info.name+' 已移除（安裝紀錄已更新）');
 }
 const apps={messenger:[talkIcon(),'YIQI Talk'],explorer:['🖥️','我的電腦'],documents:['📁','我的文件'],bin:['🗑️','資源回收筒'],notepad:['📝','記事本'],paint:['🎨','小畫家'],calculator:['🧮','計算機'],player:['🎵','音樂播放器'],browser:['🌐','網際網路'],youtube:['▶️','YouTube'],software:['📦','軟體中心'],sticky:['🗒️','便利貼'],timer:['⏱️','倒數計時器'],todo:['✅','待辦清單'],imageViewer:['🖼️','圖片檢視器'],settings:['⚙️','控制台'],about:['✨','關於億柒 XP']};
@@ -851,7 +852,7 @@ function titleFor(w){return w.app==='imageViewer'?(w.arg||'圖片')+' - 圖片�
 function openWin(appId,arg){if(state!=='desktop')return;
  if(String(appId).startsWith('folder:')){openWin('explorer',String(appId).slice(7));return;}
  if(softwareCatalog.some(item=>item.id===appId)&&!installedSoftware.has(appId)){toast('請先到軟體中心安裝這個程式');openWin('software');return;}
- if(appId==='chat'&&!ymSession.signedIn){openWin('messenger');toast('請先登入 YIQI Talk（純模擬）');return;}if(appId==='chat'){delete talkUnread[arg];renderTasks();refresh(wins.find(w=>w.app==='messenger'));}showStart=false;renderStart();const key=appId==='chat'?'chat_'+arg:appId==='notepad'?'notepad_'+(arg||'個人筆記.txt'):appId;let w=wins.find(x=>x.id===key);if(w){if(appId==='explorer'&&arg!==undefined&&folderExists(arg)){navigateExplorer(w,arg)}else if(appId==='imageViewer'&&arg!==undefined){w.arg=arg;w.title=titleFor(w);refresh(w)}w.minimized=false;activate(w.id);return}w={id:key,app:appId,arg,icon:appId==='chat'?talkIcon():apps[appId]?.[0]||'📄',title:'',minimized:false,maximized:false,z:++nextZ,x:Math.min(130+28*wins.length,Math.max(5,innerWidth-330)),y:Math.min(46+26*wins.length,Math.max(5,innerHeight-280)),width:appId==='messenger'?385:appId==='chat'?480:appId==='settings'?600:appId==='paint'?720:appId==='notepad'?590:640,height:appId==='chat'?460:appId==='calculator'?430:appId==='messenger'?645:appId==='notepad'?460:460};w.title=titleFor(w);
+ if(appId==='chat'&&!ymSession.signedIn){openWin('messenger');toast('請先登入 YIQI Talk（純模擬）');return;}if(appId==='chat'){delete talkUnread[arg];renderTasks();refresh(wins.find(w=>w.app==='messenger'));}showStart=false;renderStart();const key=appId==='chat'?'chat_'+arg:appId==='notepad'?'notepad_'+(arg||'個人筆記.txt'):appId;let w=wins.find(x=>x.id===key);if(w){if(appId==='explorer'&&arg!==undefined&&folderExists(arg)){navigateExplorer(w,arg)}else if(appId==='imageViewer'&&arg!==undefined){w.arg=arg;w.title=titleFor(w);refresh(w)}w.minimized=false;activate(w.id);return}w={id:key,app:appId,arg,icon:appId==='chat'?talkIcon():apps[appId]?.[0]||'📄',title:'',minimized:false,maximized:false,z:++nextZ,x:Math.min(130+28*wins.length,Math.max(5,innerWidth-330)),y:Math.min(46+26*wins.length,Math.max(5,innerHeight-280)),width:appId==='messenger'?385:appId==='chat'?480:appId==='settings'?600:appId==='paint'?720:appId==='notepad'?590:640,height:appId==='chat'?460:appId==='calculator'?430:appId==='messenger'?645:appId==='notepad'?460:460};w.title=titleFor(w);if(appId==='notepad')w.fileExistedOnOpen=!!files.find(f=>f.name===noteFileName(w));
  const sc=$('#desktop-scroll');
  if(sc){
   const viewW=sc.clientWidth,viewH=sc.clientHeight;
@@ -886,6 +887,7 @@ function saveNoteDraft(w){
  if(!w||w.app!=='notepad')return false;
  const name=noteFileName(w), content=noteDraftText(name);
  const found=files.find(f=>f.name===name),previous=found?.content;
+ if(!found&&w.fileExistedOnOpen){toast('原本的文件已移除，無法直接儲存；請重新建立文件後再編輯');return false}
  if(found)found.content=content;else files.push({id:newItemId(),name,content,folderId:'docs',kind:'text'});
  if(!savePersonalData()){
   if(found)found.content=previous;else files.pop();
@@ -1070,7 +1072,7 @@ case 'todo':return `<div class="window-main software-utility"><h3>✅ 待辦清�
 case 'timer':return `<div class="window-main software-utility"><h3>⏱️ 倒數計時器</h3><div class="software-timer-display" data-utility-timer-display>${timerText(softwareRemaining())}</div><p class="small" data-utility-timer-status>${softwareState.timer.endAt!==null?'倒數中':softwareRemaining()===0?'時間已到':'已暫停／待開始'}</p><label class="software-timer-choose">倒數時間 <select data-utility-timer-minutes aria-label="倒數分鐘數">${[1,3,5,10,15,30].map(minutes=>`<option value="${minutes}" ${softwareState.timer.duration===minutes*60?'selected':''}>${minutes} 分鐘</option>`).join('')}</select></label><div class="software-timer-buttons"><button type="button" class="primary" data-utility-timer="start">▶ 開始／繼續</button><button type="button" class="secondary" data-utility-timer="pause">⏸ 暫停</button><button type="button" class="secondary" data-utility-timer="reset">↶ 重設</button></div><div class="top-note">實際以時間差計算倒數；重新開機後恢復預設。計時提示需保持網頁開啟，iPhone 背景執行可能受系統限制。</div></div>`;
 case 'youtube':return youtubeHtml(w);
 case 'browser':return `<div class="toolbar"><span>🌐</span><input id="fake-url" style="flex:1" value="yiqi://welcome" aria-label="模擬網址"><button data-action="browse">前往</button></div><div class="browser-page"><h2>歡迎使用億柒瀏覽器</h2><p>這是一個懷舊網頁瀏覽器模擬視窗，可以使用下面的書籤。</p><p><button class="secondary" data-action="fakeHome">🏠 首頁</button> <button class="secondary" data-action="fakeHelp">📖 使用說明</button></p><p id="browser-output" class="top-note">提示：輸入真實 https:// 網址並按「前往」，會使用新分頁開啟，不會在模擬視窗載入。</p></div>`;
-case 'about':return `<div class="window-main"><div class="app-card"><h3>✨ 億柒懷舊系統／YIQI Talk</h3><p><b>YIQI Retro Desktop · 版本 v0.6.2</b></p><p>獨立開發的 Windows XP 風格純網頁模擬系統，包含開機、登入、桌面、關機、重新啟動、待命、模擬聊天、小工具，以及 YouTube 官方嵌入式播放器、YIQI XP 專屬桌布與可實際操作的內建軟體中心。</p><p>不是真正的 Windows，也不是 Microsoft 官方產品。YIQI Talk 內的好友與聊天皆為虛擬角色，無法和真實使用者通訊。</p><p>網站不需要帳號或伺服器。個人資料夾、已儲存文件和安裝的軟體會在模擬重新開機後保留；桌布、聊天和暫時設定則會還原。重要資料請自行匯出備份。</p></div><div class="top-note">製作原則：不採用 Windows 原版圖像、商標圖樣或受版權保護的音效。</div></div>`;
+case 'about':return `<div class="window-main"><div class="app-card"><h3>✨ 億柒懷舊系統／YIQI Talk</h3><p><b>YIQI Retro Desktop · 版本 v0.6.3</b></p><p>獨立開發的 Windows XP 風格純網頁模擬系統，包含開機、登入、桌面、關機、重新啟動、待命、模擬聊天、小工具，以及 YouTube 官方嵌入式播放器、YIQI XP 專屬桌布與可實際操作的內建軟體中心。</p><p>不是真正的 Windows，也不是 Microsoft 官方產品。YIQI Talk 內的好友與聊天皆為虛擬角色，無法和真實使用者通訊。</p><p>網站不需要帳號或伺服器。個人資料夾、已儲存文件和安裝的軟體會在模擬重新開機後保留；桌布、聊天和暫時設定則會還原。重要資料請自行匯出備份。</p></div><div class="top-note">製作原則：不採用 Windows 原版圖像、商標圖樣或受版權保護的音效。</div></div>`;
 default:return `<div class="window-main">此程式尚未提供。</div>`}}
 // 個人模擬磁碟與資料夾（與關機重設的暫存狀態分離）。
 function fsId(f){return f.id||f.name}
@@ -1093,32 +1095,45 @@ function renameFsItem(type,id){
  const name=nameAllowed(raw);if(!name)return toast('名稱不可空白');
  if(type==='folder'&&folders.some(f=>f!==item&&f.parentId===item.parentId&&f.name===name))return toast('已有同名資料夾');
  if(type==='file'&&files.some(f=>f!==item&&f.name===name))return toast('已有同名文件');
- const old=item.name;item.name=name;savePersonalData();refreshPersonalUI();
+ const old=item.name;item.name=name;if(!savePersonalData()){item.name=old;personalData={version:1,folders,files,bin,installed:[...installedSoftware],shortcutFolders};toast('儲存失敗，名稱未更改');return}refreshPersonalUI();
  // 若檔名在記事本中已開啟，避免對錯誤檔案寫入。
  if(type==='file')for(const w of [...wins].filter(w=>w.app==='notepad'&&w.arg===old))closeWin(w.id,true)
 }
 function deleteFsItem(type,id){
+ // 儲存失敗時必須還原記憶體中的異動，避免瀏覽器畫面和真正保存的資料不一致。
+ const snapshot={folders:[...folders],files:[...files],bin:[...bin],shortcuts:{...shortcutFolders}};
+ let affectedFiles=[];
  if(type==='file'){
   const idx=files.findIndex(f=>fsId(f)===id);if(idx<0)return;
-  if(noteDrafts[files[idx].name]!==undefined&&!confirm('這份文件可能有未儲存草稿，仍要移到資源回收筒嗎？'))return;
-  bin.push({type:'file',item:files.splice(idx,1)[0]});
- }else{
+  const target=files[idx];
+  const editor=wins.find(w=>w.app==='notepad'&&noteFileName(w)===target.name);
+  if(editor&&noteIsDirty(editor)&&!confirm('這份文件在記事本中有尚未儲存的修改。移到資源回收筒會捨棄這些修改，確定繼續嗎？'))return;
+  affectedFiles=[target.name];
+  bin=[...bin,{type:'file',item:target}];files=files.filter((_,i)=>i!==idx);
+ }else if(type==='folder'){
   const item=folders.find(f=>f.id===id);if(!item||isSystemFolder(id))return;
   const all=descendantsOf(id),entries=folders.filter(f=>all.has(f.id));
   const related=files.filter(f=>all.has(f.folderId));
-  if(!confirm('要將「'+item.name+'」及其中 '+related.length+' 份文件一起移到資源回收筒嗎？'))return;
+  const dirty=related.filter(f=>wins.some(w=>w.app==='notepad'&&noteFileName(w)===f.name&&noteIsDirty(w)));
+  const suffix=dirty.length?'\n\n注意：其中有 '+dirty.length+' 份文件正在編輯且尚未儲存，刪除將捨棄這些草稿。':'';
+  if(!confirm('要將「'+item.name+'」及其中 '+related.length+' 份文件一起移到資源回收筒嗎？'+suffix))return;
+  affectedFiles=related.map(f=>f.name);
   const links={};for(const [k,v] of Object.entries(shortcutFolders))if(all.has(v)){links[k]=v;delete shortcutFolders[k]}
   folders=folders.filter(f=>!all.has(f.id));files=files.filter(f=>!all.has(f.folderId));
-  bin.push({type:'folder',item:{folders:[item,...entries.filter(f=>f!==item)],files:related,shortcuts:links}});
-  // 不論「我的電腦」或「我的文件」有幾個視窗，刪除中的資料夾都改回有效的上層。
-  for(const w of wins.filter(w=>w.app==='explorer'||w.app==='documents')){
-   if(all.has(w.arg))w.arg=folderExists(item.parentId)?item.parentId:'root';
-  }
+  bin=[...bin,{type:'folder',item:{folders:[item,...entries.filter(f=>f!==item)],files:related,shortcuts:links}}];
+ }else return;
+ if(!savePersonalData()){
+  folders=snapshot.folders;files=snapshot.files;bin=snapshot.bin;shortcutFolders=snapshot.shortcuts;
+  personalData={version:1,folders,files,bin,installed:[...installedSoftware],shortcutFolders};
+  toast('儲存空間不足，刪除未生效；原有文件仍保留');return;
  }
- savePersonalData();refreshPersonalUI();toast('已移到資源回收筒');
+ // 刪除成功後才關閉被刪除文件的檢視／編輯視窗，防止舊記事本另存回預設目錄。
+ for(const w of [...wins].filter(w=>(w.app==='notepad'||w.app==='imageViewer')&&affectedFiles.includes(w.app==='notepad'?noteFileName(w):w.arg)))closeWin(w.id,true);
+ refreshPersonalUI();toast('已移到資源回收筒');
 }
 function restoreFsItem(i){
  const entry=bin[i];if(!entry)return;
+ const previous={folders:[...folders],files:[...files],bin:[...bin],shortcuts:{...shortcutFolders}};
  if(entry.type==='folder'){
   const piece=entry.item;const first=piece?.folders?.[0];
   if(!first||!folderExists(first.parentId))return toast('上層資料夾不存在，暫時不能還原');
@@ -1129,7 +1144,7 @@ function restoreFsItem(i){
   if(!file||files.some(f=>f.name===file.name))return toast('檔名重複，無法還原');
   files.push({...file,folderId:folderExists(file.folderId)?file.folderId:'docs'});
  }
- bin.splice(i,1);savePersonalData();refreshPersonalUI();toast('已還原');
+ bin.splice(i,1);if(!savePersonalData()){folders=previous.folders;files=previous.files;bin=previous.bin;shortcutFolders=previous.shortcuts;personalData={version:1,folders,files,bin,installed:[...installedSoftware],shortcutFolders};toast('儲存空間不足，資料尚未還原');return}refreshPersonalUI();toast('已還原');
 }
 function showMoveDialog(type,id){
  const folder=type==='folder'?folders.find(f=>f.id===id):null;
@@ -1144,6 +1159,7 @@ function showMoveDialog(type,id){
 }
 function commitMove(type,id,to){
  if(!folderExists(to))return;
+ const previousFolders=folders.map(f=>({...f})),previousFiles=files.map(f=>({...f})),previousShortcuts={...shortcutFolders};
  if(type==='folder'){
   const f=folders.find(x=>x.id===id);if(!f||!canMoveFolder(id,to))return toast('不能移動到自己的子資料夾');
   if(folders.some(x=>x!==f&&x.parentId===to&&x.name===f.name))return toast('目標已有同名資料夾');
@@ -1154,7 +1170,7 @@ function commitMove(type,id,to){
   if(!installedSoftware.has(id))return;
   if(to==='desktop')delete shortcutFolders[id];else shortcutFolders[id]=to;
  }else return;
- savePersonalData();refreshPersonalUI();toast('已移動到 '+folderLabel(to));
+ if(!savePersonalData()){folders=previousFolders;files=previousFiles;shortcutFolders=previousShortcuts;personalData={version:1,folders,files,bin,installed:[...installedSoftware],shortcutFolders};toast('儲存失敗，移動未生效');return}refreshPersonalUI();toast('已移動到 '+folderLabel(to));
 }
 function exportPersonalBackup(){
  const data={kind:'YIQI-XP-PERSONAL-BACKUP',exportedAt:new Date().toISOString(),data:{version:1,folders,files,bin,installed:[...installedSoftware],shortcutFolders}};
@@ -1378,7 +1394,7 @@ function selectMusicTrack(index){
  else updatePlayerUI();
 }
 let calcState={display:'0',a:null,op:null,fresh:false};function calcPress(x){let s=calcState;if(x==='C'){calcState={display:'0',a:null,op:null,fresh:false};s=calcState}else if(x==='←'){s.display=s.display.length>1?s.display.slice(0,-1):'0'}else if(/[0-9]/.test(x)&&x.length===1){s.display=(s.fresh||s.display==='0')?x:s.display+x;s.fresh=false}else if(x==='.'){if(s.fresh){s.display='0';s.fresh=false}if(!s.display.includes('.'))s.display+='.'}else if(x==='±'){s.display=String(-Number(s.display))}else if(x==='%'){s.display=String(Number(s.display)/100)}else if(['+','−','×','÷'].includes(x)){if(s.a!==null&&s.op&&!s.fresh)calcPress('=');s.a=Number(s.display);s.op=x;s.fresh=true}else if(x==='='){if(s.a!==null&&s.op){const b=Number(s.display),res=({'+':()=>s.a+b,'−':()=>s.a-b,'×':()=>s.a*b,'÷':()=>b===0?NaN:s.a/b})[s.op]();s.display=Number.isFinite(res)?String(Number(res.toFixed(9))):'錯誤';s.a=null;s.op=null;s.fresh=true}}const el=$('#calc-display');if(el)el.textContent=s.display}
-function action(name,el){switch(name){case 'ytalkTheme':{const name=(el.dataset.themeName||'aqua').trim();if(!ytalkThemes[name])return;ymSession.theme=name;refreshTalkWindows();toast('已切換為 '+ytalkThemeName(name)+' 主題（重新開機恢復水藍）');break}case 'saveNote':{const w=wins.find(w=>w.id===el.closest('.window')?.id.slice(4));if(!w)return;const textarea=el.closest('.window')?.querySelector('[data-note-edit]');if(textarea)noteDrafts[noteFileName(w)]=textarea.value;if(saveNoteDraft(w))toast('已儲存：'+noteFileName(w)+'（重新開機保留）');break}case 'newNote':{const wanted=prompt('新文件名稱（不需要輸入副檔名）','我的筆記');if(wanted===null)return;let name=wanted.trim().replace(/[\\/:*?"<>|]/g,'').slice(0,40);if(!name){toast('請輸入有效的名稱');return}if(!name.endsWith('.txt'))name+='.txt';if(files.some(f=>f.name===name)){toast('已有相同名稱的文件');return}const parent=el.closest('.window')?.id==='win-explorer'?wins.find(w=>w.id==='explorer')?.arg||'root':el.closest('.window')?.id==='win-documents'?'docs':'docs';files.push({id:newItemId(),name,content:'',folderId:folderExists(parent)?parent:'docs',kind:'text'});if(!savePersonalData()){files.pop();return}refreshFileWindows();openWin('notepad',name);break}case 'saveName':{const name=$('#username-input')?.value?.trim();if(!name)return toast('名稱不可空白');cfg.name=name.slice(0,22);saveSettings();refresh(wins.find(x=>x.app==='messenger'));toast('已暫時修改名稱（重新開機會還原）');break}case 'goComputer':openWin('explorer');break;case 'goDocuments':openWin('documents');break;case 'emptyBin':if(!bin.length)return;if(confirm('確定要永久清空模擬資源回收筒嗎？')){bin=[];savePersonalData();refreshFileWindows();toast('已清空資源回收筒')}break;case 'fakeDrive':toast('這是模擬磁碟，沒有存取裝置真實 C 槽或 D 槽。');break;case 'emote':{const id=el.dataset.chatId;const inp=document.querySelector(`[data-chat-form="${id}"] input`);if(inp){inp.value+='😊';inp.focus()}break}case 'nudge':{const id='chat_'+el.dataset.chatId;const win=document.getElementById('win-'+id);win?.classList.remove('shake');void win?.offsetWidth;win?.classList.add('shake');chirp(780,.07);setTimeout(()=>chirp(1010,.16),110);toast('已發送模擬震動！');const session=epoch,seq=ymSession.seq,friend=el.dataset.chatId;setTimeout(()=>completeTalkReply(friend,'',session,seq,'nudge'),700);break}case 'clearChat':{const id=el.dataset.chatId;if(confirm('清除這個虛擬好友的本機模擬聊天紀錄？')){delete chats[id];store(KEYS.chat,chats);refresh(wins.find(x=>x.id==='chat_'+id))}break}case 'paintClear':{const c=$('#paint-canvas');if(c){const ctx=c.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,c.width,c.height)}break}case 'paintSave':{const c=$('#paint-canvas');if(!c)return;const a=document.createElement('a');a.href=c.toDataURL('image/png');a.download='億柒小畫家.png';a.click();toast('圖片已交由瀏覽器下載（手機可查看下載項目）');break}case 'toggleMusic':playMusic();break;case 'nextTrack':case 'prevTrack':selectMusicTrack(melodyTrack+(name==='nextTrack'?1:songs.length-1));break;case 'fakeHome':{$('#fake-url').value='yiqi://welcome';$('#browser-output').textContent='歡迎回到億柒首頁！這是網頁內的模擬瀏覽器。';break}case 'fakeHelp':{$('#fake-url').value='yiqi://help';$('#browser-output').textContent='小提示：桌面圖示可以開啟程式；按開始選單可以關機、登出與重新開機。';break}case 'browse':{const url=$('#fake-url')?.value?.trim()||'';if(/^https?:\/\//i.test(url)){window.open(url,'_blank','noopener,noreferrer');$('#browser-output').textContent='已嘗試以新分頁開啟網址；可能被瀏覽器阻擋。'}else $('#browser-output').textContent='模擬瀏覽器只支援 yiqi:// 頁面；真實網頁請輸入完整 https:// 網址。';break}}}
+function action(name,el){switch(name){case 'ytalkTheme':{const name=(el.dataset.themeName||'aqua').trim();if(!ytalkThemes[name])return;ymSession.theme=name;refreshTalkWindows();toast('已切換為 '+ytalkThemeName(name)+' 主題（重新開機恢復水藍）');break}case 'saveNote':{const w=wins.find(w=>w.id===el.closest('.window')?.id.slice(4));if(!w)return;const textarea=el.closest('.window')?.querySelector('[data-note-edit]');if(textarea)noteDrafts[noteFileName(w)]=textarea.value;if(saveNoteDraft(w))toast('已儲存：'+noteFileName(w)+'（重新開機保留）');break}case 'newNote':{const wanted=prompt('新文件名稱（不需要輸入副檔名）','我的筆記');if(wanted===null)return;let name=wanted.trim().replace(/[\\/:*?"<>|]/g,'').slice(0,40);if(!name){toast('請輸入有效的名稱');return}if(!name.endsWith('.txt'))name+='.txt';if(files.some(f=>f.name===name)){toast('已有相同名稱的文件');return}const hostId=el.closest('.window')?.id;const hostWin=wins.find(w=>hostId==='win-'+w.id);const parent=(hostWin&&(hostWin.app==='explorer'||hostWin.app==='documents'))?currentExplorerFolder(hostWin):'docs';files.push({id:newItemId(),name,content:'',folderId:folderExists(parent)?parent:'docs',kind:'text'});if(!savePersonalData()){files.pop();return}refreshFileWindows();openWin('notepad',name);break}case 'saveName':{const name=$('#username-input')?.value?.trim();if(!name)return toast('名稱不可空白');cfg.name=name.slice(0,22);saveSettings();refresh(wins.find(x=>x.app==='messenger'));toast('已暫時修改名稱（重新開機會還原）');break}case 'goComputer':openWin('explorer');break;case 'goDocuments':openWin('documents');break;case 'emptyBin':if(!bin.length)return;if(confirm('確定要永久清空模擬資源回收筒嗎？')){const previousBin=bin;bin=[];if(!savePersonalData()){bin=previousBin;personalData={version:1,folders,files,bin,installed:[...installedSoftware],shortcutFolders};toast('儲存失敗，資源回收筒尚未清空');break}refreshFileWindows();toast('已清空資源回收筒')}break;case 'fakeDrive':toast('這是模擬磁碟，沒有存取裝置真實 C 槽或 D 槽。');break;case 'emote':{const id=el.dataset.chatId;const inp=document.querySelector(`[data-chat-form="${id}"] input`);if(inp){inp.value+='😊';inp.focus()}break}case 'nudge':{const id='chat_'+el.dataset.chatId;const win=document.getElementById('win-'+id);win?.classList.remove('shake');void win?.offsetWidth;win?.classList.add('shake');chirp(780,.07);setTimeout(()=>chirp(1010,.16),110);toast('已發送模擬震動！');const session=epoch,seq=ymSession.seq,friend=el.dataset.chatId;setTimeout(()=>completeTalkReply(friend,'',session,seq,'nudge'),700);break}case 'clearChat':{const id=el.dataset.chatId;if(confirm('清除這個虛擬好友的本機模擬聊天紀錄？')){delete chats[id];store(KEYS.chat,chats);refresh(wins.find(x=>x.id==='chat_'+id))}break}case 'paintClear':{const c=$('#paint-canvas');if(c){const ctx=c.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,c.width,c.height)}break}case 'paintSave':{const c=$('#paint-canvas');if(!c)return;const a=document.createElement('a');a.href=c.toDataURL('image/png');a.download='億柒小畫家.png';a.click();toast('圖片已交由瀏覽器下載（手機可查看下載項目）');break}case 'toggleMusic':playMusic();break;case 'nextTrack':case 'prevTrack':selectMusicTrack(melodyTrack+(name==='nextTrack'?1:songs.length-1));break;case 'fakeHome':{$('#fake-url').value='yiqi://welcome';$('#browser-output').textContent='歡迎回到億柒首頁！這是網頁內的模擬瀏覽器。';break}case 'fakeHelp':{$('#fake-url').value='yiqi://help';$('#browser-output').textContent='小提示：桌面圖示可以開啟程式；按開始選單可以關機、登出與重新開機。';break}case 'browse':{const url=$('#fake-url')?.value?.trim()||'';if(/^https?:\/\//i.test(url)){window.open(url,'_blank','noopener,noreferrer');$('#browser-output').textContent='已嘗試以新分頁開啟網址；可能被瀏覽器阻擋。'}else $('#browser-output').textContent='模擬瀏覽器只支援 yiqi:// 頁面；真實網頁請輸入完整 https:// 網址。';break}}}
 app.addEventListener('click',e=>{
  const newFolder=e.target.closest('[data-personal-new-folder]');if(newFolder){createFolder(newFolder.dataset.personalNewFolder);return}
  const nav=e.target.closest('[data-explorer-nav]');if(nav){
