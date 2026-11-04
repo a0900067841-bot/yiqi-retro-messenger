@@ -236,6 +236,22 @@ html,body{background:#071a36!important;overscroll-behavior:none}
 .note-warning-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:16px}
 .note-warning-actions button{font-size:13px;min-height:38px;white-space:normal}
 @media(max-height:500px){.dialog-cover{overflow-y:auto;align-items:start}.dialog{margin:auto}.shutdown-warning .dialog-inner{padding:12px}}
+
+/* YIQI XP v0.5.0 內建軟體中心；下載中心僅啟用經審核、可操作的本地網頁程式 */
+.software-center,.software-utility{overflow-y:auto;min-height:0;height:100%;box-sizing:border-box}
+.software-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,235px),1fr));gap:12px;margin:14px 0}
+.software-card{padding:14px;border:1px solid #b4cceb;border-radius:8px;background:linear-gradient(#fefeff,#e9f3ff);color:#1a3b64;box-shadow:0 2px 6px #0c3e7914}
+.software-card-heading{display:flex;gap:10px;align-items:center}.software-bigicon{font-size:32px;flex:0 0 38px}
+.software-card-actions{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-top:13px}.software-card-actions button{padding:8px 10px}
+.software-installed{font-size:12px;color:#166b39;font-weight:700;margin-right:auto}
+.software-sticky{display:block;width:100%;min-height:170px;height:min(52vh,360px);resize:vertical;box-sizing:border-box;border:1px solid #e9b44e;background:linear-gradient(#fff7af,#fff2a2);padding:12px;font-size:16px;line-height:1.6;border-radius:4px;color:#3a310c}
+.software-task-form{display:flex;gap:7px;flex-wrap:wrap}.software-task-form input{flex:1;min-width:140px;padding:10px;border:1px solid #91b4da;border-radius:5px}
+.software-task-list{margin:12px 0;display:grid;gap:8px}.software-task-row{border:1px solid #c6d9ef;border-radius:5px;background:#fff;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 9px}
+.software-task-row label{display:flex;gap:7px;align-items:center;min-width:0;overflow-wrap:anywhere}.software-task-done{text-decoration:line-through;color:#888}
+.software-timer-display{font-size:clamp(34px,8vw,68px);font-weight:800;color:#1450a0;letter-spacing:3px;text-align:center;font-variant-numeric:tabular-nums;margin:13px 0}
+.software-timer-choose,.software-timer-buttons{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:9px;margin:12px 0}
+.software-timer-choose select{padding:8px;border:1px solid #9cbde2;border-radius:6px}.software-timer-buttons button{padding:8px 12px}
+
 </style>
 </head>
 <body><main id="app" aria-label="億柒懷舊模擬電腦"></main>
@@ -275,7 +291,71 @@ let ymSession={signedIn:false,account:'',remembered:'yiqi_guest',remember:true,a
 let talkUnread={},talkTyping={},talkPendingReplies={},friendQuery='',deferredTalkReplies=[];
 const simulatedInvite={id:'pixel',name:'像素貓',emoji:'🐱',status:'線上',intro:'喵～一起玩懷舊電腦吧！'};
 function talkIcon(){return `<svg class="ytalk-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><path d="M13 8h26c7 0 12 5 12 12v15c0 7-5 12-12 12H25L14 56v-9C7 45 4 40 4 34V20C4 13 8 8 13 8Z" fill="#0b65b7" stroke="#e8fbff" stroke-width="2.7" stroke-linejoin="round"/><path d="M21 15h28c6 0 11 5 11 11v14c0 6-5 11-11 11h-6l-3 7-10-7h-9c-6 0-11-5-11-11V26c0-6 5-11 11-11Z" fill="#f6fdff" stroke="#408dd5" stroke-width="2.7" stroke-linejoin="round"/><path d="M16 19c2-2 6-2 9-2h23c5 0 9 3 9 7" fill="none" stroke="#b6e8ff" stroke-width="2.5" stroke-linecap="round"/><circle cx="27" cy="33" r="3.2" fill="#2b86d5"/><circle cx="36" cy="33" r="3.2" fill="#2b86d5"/><circle cx="45" cy="33" r="3.2" fill="#2b86d5"/></svg>`}
-const apps={messenger:[talkIcon(),'YIQI Talk'],explorer:['🖥️','我的電腦'],documents:['📁','我的文件'],bin:['🗑️','資源回收筒'],notepad:['📝','記事本'],paint:['🎨','小畫家'],calculator:['🧮','計算機'],player:['🎵','音樂播放器'],browser:['🌐','網際網路'],youtube:['▶️','YouTube'],settings:['⚙️','控制台'],about:['✨','關於億柒 XP']};
+// 所有軟體都是本網站內建、可真正操作的安全網頁程式。安裝只是啟用捷徑；不執行外部 .exe 或任意 JavaScript。
+const softwareCatalog=[
+ {id:'sticky',name:'便利貼',icon:'🗒️',description:'在桌面視窗輸入備忘文字，待命後繼續編輯'},
+ {id:'timer',name:'倒數計時器',icon:'⏱️',description:'選擇分鐘數、開始、暫停與重設，時間到會提示'},
+ {id:'todo',name:'待辦清單',icon:'✅',description:'新增待辦、勾選完成、刪除項目'}
+];
+let installedSoftware=new Set();
+const blankSoftwareState=()=>({sticky:'',tasks:[],timer:{duration:300,remaining:300,endAt:null,doneNotified:false}});
+let softwareState=blankSoftwareState(),softwareTimerInterval=null,softwareTimerResumeOnWake=false;
+function resetSoftwareSession(){
+ installedSoftware=new Set();softwareState=blankSoftwareState();softwareTimerResumeOnWake=false;
+ if(softwareTimerInterval!==null){clearInterval(softwareTimerInterval);softwareTimerInterval=null}
+ syncInstalledShortcuts();
+}
+function softwareRemaining(){
+ const t=softwareState.timer;
+ return t.endAt===null?t.remaining:Math.max(0,Math.ceil((t.endAt-Date.now())/1000));
+}
+function timerText(seconds){return String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0')}
+function tickSoftwareTimer(){
+ const t=softwareState.timer;
+ if(t.endAt!==null&&softwareRemaining()===0){
+  t.endAt=null;t.remaining=0;
+  if(!t.doneNotified&&state==='desktop'){
+   t.doneNotified=true;
+   toast('⏱️ 倒數計時結束！');chirp(880,.20);
+  }
+ }
+ const label=document.querySelector('[data-utility-timer-display]');
+ if(label)label.textContent=timerText(softwareRemaining());
+ const stateLabel=document.querySelector('[data-utility-timer-status]');
+ if(stateLabel)stateLabel.textContent=t.endAt!==null?'倒數中':softwareRemaining()===0?'時間已到':'已暫停／待開始';
+}
+function ensureSoftwareTimer(){if(softwareTimerInterval===null)softwareTimerInterval=setInterval(tickSoftwareTimer,400)}
+function pauseSoftwareForStandby(){
+ const t=softwareState.timer;
+ softwareTimerResumeOnWake=t.endAt!==null;
+ if(softwareTimerResumeOnWake){t.remaining=softwareRemaining();t.endAt=null;}
+}
+function resumeSoftwareAfterStandby(){
+ const t=softwareState.timer;
+ if(softwareTimerResumeOnWake&&t.remaining>0){t.endAt=Date.now()+t.remaining*1000;ensureSoftwareTimer();}
+ softwareTimerResumeOnWake=false;tickSoftwareTimer();
+}
+function redrawSoftwareCenter(){const w=wins.find(x=>x.app==='software');if(w&&!w.minimized)refresh(w)}
+function installSoftware(id){
+ const info=softwareCatalog.find(x=>x.id===id);
+ if(!info)return;
+ if(installedSoftware.has(id)){openWin(id);return}
+ installedSoftware.add(id);syncInstalledShortcuts();renderShortcutIcons();renderStart();redrawSoftwareCenter();
+ toast(info.name+' 安裝完成，可從桌面與開始選單開啟（重新開機會還原）');
+}
+function uninstallSoftware(id){
+ const info=softwareCatalog.find(x=>x.id===id);
+ if(!info||!installedSoftware.has(id))return;
+ installedSoftware.delete(id);
+ closeWin(id,true);delete desktopIconPositions[id];
+ // 移除軟體時也清除本次使用資料，避免重新安裝讀到舊資料。
+ if(id==='sticky')softwareState.sticky='';
+ if(id==='todo')softwareState.tasks=[];
+ if(id==='timer')softwareState.timer={duration:300,remaining:300,endAt:null,doneNotified:false};
+ syncInstalledShortcuts();renderShortcutIcons();renderStart();redrawSoftwareCenter();
+ toast(info.name+' 已移除');
+}
+const apps={messenger:[talkIcon(),'YIQI Talk'],explorer:['🖥️','我的電腦'],documents:['📁','我的文件'],bin:['🗑️','資源回收筒'],notepad:['📝','記事本'],paint:['🎨','小畫家'],calculator:['🧮','計算機'],player:['🎵','音樂播放器'],browser:['🌐','網際網路'],youtube:['▶️','YouTube'],software:['📦','軟體中心'],sticky:['🗒️','便利貼'],timer:['⏱️','倒數計時器'],todo:['✅','待辦清單'],settings:['⚙️','控制台'],about:['✨','關於億柒 XP']};
 // 所有音訊均以 Web Audio 本機合成；非微軟原版音效或受保護歌曲。
 function getAudioContext(){
  try{
@@ -360,6 +440,7 @@ function restoreOnBoot(){
   ymSession={signedIn:false,account:'',remembered:'yiqi_guest',remember:true,auto:false,invisible:false,presence:'online',pending:false,theme:'aqua',seq:ymSession.seq+1};
   talkUnread={};talkTyping={};talkPendingReplies={};friendQuery='';deferredTalkReplies=[];
   volumeOpen=false;
+  resetSoftwareSession();
   files=factoryFiles.map(f=>({...f}));
   noteDrafts={};noteClosePendingId=null;
   bin=[];
@@ -376,7 +457,7 @@ function login(){playPowerSound('startup');state='desktop';renderDesktop()}
 async function shutdown(mode){if(state!=='desktop')return;powerWarningMode=null;powerDialog=false;showStart=false;if(mode==='standby'){
   // 待命只蓋上黑色遮罩，不重新建立桌面 DOM。
   // 否則小畫家筆跡、聊天未送出的文字與部分應用狀態會在喚醒時消失。
-  standbyViewport={width:innerWidth,height:innerHeight};state='standby';renderStart();renderDialog();
+  pauseSoftwareForStandby();standbyViewport={width:innerWidth,height:innerHeight};state='standby';renderStart();renderDialog();
   const overlay=document.createElement('section');overlay.id='standby-overlay';
   overlay.className='screen standby-screen standby-overlay';
   overlay.innerHTML=`<button class="wake-btn" data-global="wake">☾　點一下喚醒電腦</button><p class="small" style="color:#8eb1cf">模擬待命：程式與未儲存內容保持原狀</p>`;
@@ -384,7 +465,14 @@ async function shutdown(mode){if(state!=='desktop')return;powerWarningMode=null;
   return;
  }if(mode==='logout'){noteDrafts={};noteClosePendingId=null;ymSession.seq++;ymSession.signedIn=false;ymSession.pending=false;ymSession.auto=false;talkUnread={};talkTyping={};talkPendingReplies={};friendQuery='';deferredTalkReplies=[];simEventsStarted=false;alerts=[];wins=[];activeId=null;stopMusic();setScreen(`<section class="screen shutdown-screen"><h1>YIQI XP</h1><p>正在登出...</p></section>`);const t=++epoch;await nap(speed(1400));if(t===epoch)showWelcome();return}
 const t=++epoch;state='shutting';stopMusic();setScreen(`<section class="screen shutdown-screen"><h1>YIQI XP</h1><p id="shutdown-step">正在結束模擬工作階段...</p></section>`);playPowerSound('shutdown');await nap(speed(1100));if(t!==epoch)return;$('#shutdown-step').textContent='正在登出...';await nap(speed(1100));if(t!==epoch)return;$('#shutdown-step').textContent=mode==='restart'?'電腦正在重新啟動...':'電腦正在關機...';await nap(speed(1400));if(t!==epoch)return;wins=[];activeId=null;if(mode==='restart'){setScreen('<section class="screen boot-screen"></section>');await nap(speed(650));if(t===epoch)boot()}else powerOffScreen()}
-const desktopShortcuts=[['explorer','我的電腦'],['documents','我的文件'],['bin','資源回收筒'],['messenger','YIQI Talk'],['notepad','記事本'],['player','音樂播放器'],['browser','網際網路'],['youtube','YouTube'],['paint','小畫家'],['calculator','計算機'],['settings','控制台']];
+const baseDesktopShortcuts=[['explorer','我的電腦'],['documents','我的文件'],['bin','資源回收筒'],['messenger','YIQI Talk'],['notepad','記事本'],['player','音樂播放器'],['browser','網際網路'],['youtube','YouTube'],['paint','小畫家'],['calculator','計算機'],['settings','控制台'],['software','軟體中心']];
+let desktopShortcuts=baseDesktopShortcuts.slice();
+function syncInstalledShortcuts(){desktopShortcuts=[...baseDesktopShortcuts,...softwareCatalog.filter(x=>installedSoftware.has(x.id)).map(x=>[x.id,x.name])]}
+function renderShortcutIcons(){
+ const el=document.querySelector('.desktop-icons');if(!el)return;
+ el.innerHTML=desktopShortcuts.map(([id,name],index)=>{const pos=shortcutPosition(id,index);return `<button class="desktop-icon" data-open="${id}" data-shortcut="${id}" style="left:${pos.x}px;top:${pos.y}px" title="開啟${name}，長按可移動"><span class="icon-art">${apps[id][0]}</span><span>${safe(name)}</span></button>`}).join('');
+ fitDesktopIconsToViewport();
+}
 function shortcutPosition(id,index){
  const rows=Math.max(2,Math.min(innerWidth<=700?5:7,Math.floor((innerHeight-80)/86)));
  const mobile=innerWidth<=700;
@@ -485,7 +573,7 @@ addEventListener('resize',()=>{
 
 function renderDesktop(){
  volumeOpen=false;windowToolsOpen=false;state='desktop';lastDesktopViewportWidth=innerWidth;
- const icons=desktopShortcuts.map(([id,n],i)=>{const pos=shortcutPosition(id,i);return `<button class="desktop-icon" data-open="${id}" data-shortcut="${id}" style="left:${pos.x}px;top:${pos.y}px" title="開啟${n}，長按可移動"><span class="icon-art">${apps[id][0]}</span><span>${n}</span></button>`}).join('');
+ const icons=desktopShortcuts.map(([id,n],i)=>{const pos=shortcutPosition(id,i);return `<button class="desktop-icon" data-open="${id}" data-shortcut="${id}" style="left:${pos.x}px;top:${pos.y}px" title="開啟${n}，長按可移動"><span class="icon-art">${apps[id][0]}</span><span>${safe(n)}</span></button>`}).join('');
  setScreen(`<section id="desktop" class="desktop wallpaper-${cfg.wallpaper}"><div class="desktop-scroll" id="desktop-scroll"><div class="desktop-workspace" id="desktop-workspace"><div class="desktop-icons">${icons}</div><div id="windows"></div></div></div><div id="start-slot"></div><div class="taskbar-wrap" id="taskbar-wrap"><div class="taskbar-track"><footer class="taskbar"><button id="start-button" class="start-button" data-global="start"><span class="start-emblem">✦</span>開始</button><div id="task-buttons" class="task-buttons"></div><button type="button" class="window-tools-btn" data-global="windowtools" aria-label="視窗排列" aria-expanded="false" title="視窗排列／顯示桌面">▦</button><div class="tray"><button type="button" class="tray-speaker" title="調整模擬系統音量" aria-label="調整模擬系統音量" aria-expanded="false" data-global="volume">🔊</button><span id="clock"></span></div></footer></div></div><div id="volume-slot"></div><div id="window-tools-slot"></div><div id="notification-slot" class="xp-alerts" aria-live="polite"></div><div id="dialog-slot"></div><div id="toast-slot"></div></section>`);
  bindDesktopHorizontalScroll();clockTick();renderStart();wins.forEach(w=>mountWindow(w));renderTasks();if(!clockTimer)clockTimer=setInterval(clockTick,20000);renderVolumePanel();renderAlerts();renderWindowTools();
  if(ymSession.signedIn&&!simEventsStarted)scheduleSimEvents();
@@ -540,7 +628,7 @@ function renderVolumePanel(){
  </section>`;
 }
 function clockTick(){const el=$('#clock');if(el)el.textContent=new Intl.DateTimeFormat('zh-TW',{hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date())}
-function renderStart(){const slot=$('#start-slot');if(!slot)return;$('#start-button')?.classList.toggle('on',showStart);if(!showStart){slot.innerHTML='';return}const primary=['messenger','browser','youtube','player','notepad','paint','calculator'];const secondary=['explorer','documents','bin','settings','about'];slot.innerHTML=`<nav class="start-menu"><div class="start-head"><span class="profile-icon">👤</span>${safe(cfg.name)}</div><div class="start-columns"><div class="start-left"><div class="small" style="padding:5px 8px">常用程式</div>${primary.map(id=>`<button class="menu-entry" data-open="${id}"><i>${apps[id][0]}</i>${apps[id][1]}</button>`).join('')}</div><div class="start-right">${secondary.map(id=>`<button class="menu-entry" data-open="${id}"><i>${apps[id][0]}</i>${apps[id][1]}</button>`).join('')}</div></div><div class="start-foot"><button data-global="logout">🚪 登出</button><button data-global="powerdialog">⏻ 關閉電腦</button></div></nav>`}
+function renderStart(){const slot=$('#start-slot');if(!slot)return;$('#start-button')?.classList.toggle('on',showStart);if(!showStart){slot.innerHTML='';return}const primary=['messenger','browser','youtube','software','player','notepad','paint','calculator',...softwareCatalog.filter(x=>installedSoftware.has(x.id)).map(x=>x.id)];const secondary=['explorer','documents','bin','settings','about'];slot.innerHTML=`<nav class="start-menu"><div class="start-head"><span class="profile-icon">👤</span>${safe(cfg.name)}</div><div class="start-columns"><div class="start-left"><div class="small" style="padding:5px 8px">常用程式</div>${primary.map(id=>`<button class="menu-entry" data-open="${id}"><i>${apps[id][0]}</i>${apps[id][1]}</button>`).join('')}</div><div class="start-right">${secondary.map(id=>`<button class="menu-entry" data-open="${id}"><i>${apps[id][0]}</i>${apps[id][1]}</button>`).join('')}</div></div><div class="start-foot"><button data-global="logout">🚪 登出</button><button data-global="powerdialog">⏻ 關閉電腦</button></div></nav>`}
 function toast(msg){const slot=$('#toast-slot');if(!slot){return}slot.innerHTML=`<div class="toast" role="status">${safe(msg)}</div>`;clearTimeout(tipTimer);tipTimer=setTimeout(()=>{if($('#toast-slot'))$('#toast-slot').innerHTML=''},3500)}
 function requestShutdown(mode){
  if(state!=='desktop')return;
@@ -653,6 +741,7 @@ function resetDesktopWindowSizes(){
 }
 function titleFor(w){return w.app==='chat'?(buddies.find(b=>b.id===w.arg)?.name||'聊天')+' - YIQI Talk':w.app==='notepad'?(w.arg||'個人筆記.txt')+' - 記事本':apps[w.app]?.[1]||w.app}
 function openWin(appId,arg){if(state!=='desktop')return;
+ if(softwareCatalog.some(item=>item.id===appId)&&!installedSoftware.has(appId)){toast('請先到軟體中心安裝這個程式');openWin('software');return;}
  if(appId==='chat'&&!ymSession.signedIn){openWin('messenger');toast('請先登入 YIQI Talk（純模擬）');return;}if(appId==='chat'){delete talkUnread[arg];renderTasks();refresh(wins.find(w=>w.app==='messenger'));}showStart=false;renderStart();const key=appId==='chat'?'chat_'+arg:appId==='notepad'?'notepad_'+(arg||'個人筆記.txt'):appId;let w=wins.find(x=>x.id===key);if(w){w.minimized=false;activate(w.id);return}w={id:key,app:appId,arg,icon:appId==='chat'?talkIcon():apps[appId]?.[0]||'📄',title:'',minimized:false,maximized:false,z:++nextZ,x:Math.min(130+28*wins.length,Math.max(5,innerWidth-330)),y:Math.min(46+26*wins.length,Math.max(5,innerHeight-280)),width:appId==='messenger'?385:appId==='chat'?480:appId==='settings'?600:appId==='paint'?720:appId==='notepad'?590:640,height:appId==='chat'?460:appId==='calculator'?430:appId==='messenger'?645:appId==='notepad'?460:460};w.title=titleFor(w);
  const sc=$('#desktop-scroll');
  if(sc){
@@ -845,9 +934,13 @@ case 'settings':return `<div class="window-main"><div class="app-card"><h3>🎨 
 case 'calculator':return `<div class="window-main"><div class="calc"><div class="calc-display" id="calc-display">0</div><div class="calc-keys">${['C','←','%','÷','7','8','9','×','4','5','6','−','1','2','3','+','±','0','.','='].map(x=>`<button class="${/[+×÷−=%]/.test(x)?'op':''}" data-calc="${safe(x)}">${x}</button>`).join('')}</div></div></div>`;
 case 'paint':return `<div class="paint-container"><div class="paint-tools"><label>畫筆顏色 <input type="color" id="paint-color" value="#2b60c0"></label><label>粗細 <input type="range" id="paint-size" min="1" max="24" value="4"></label><button class="secondary" data-action="paintClear">清除</button><button class="primary" data-action="paintSave">儲存圖片</button></div><div class="paint-area"><canvas id="paint-canvas" aria-label="繪圖畫布"></canvas></div></div>`;
 case 'player':return `<div class="player-center"><div id="player-disc" class="player-disc"></div><div><strong style="font-size:19px">🎵 懷舊音樂播放器</strong><p class="small">三首節奏與音色不同的原創電子旋律，非商業歌曲</p></div><select id="player-track" aria-label="選擇曲目"><option value="0">01 · 午後藍天</option><option value="1">02 · 像素漫遊</option><option value="2">03 · 夜色星光</option></select><div class="top-note" style="width:100%;text-align:center"><div id="player-track-style">輕快草原 · 三角波</div><div id="player-status" class="small">尚未播放</div></div><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button class="secondary" data-action="prevTrack">⏮ 上一首</button><button class="primary" data-action="toggleMusic" id="player-toggle">▶ 播放</button><button class="secondary" data-action="nextTrack">下一首 ⏭</button></div></div>`;
+case 'software':return `<div class="window-main software-center"><h3>📦 YIQI XP 軟體中心</h3><p class="small">這裡提供 3 款真正能操作的內建網頁小程式。按「安裝」會啟用桌面及開始選單捷徑，不下載外部程式，也不能安裝 Windows .exe。</p><div class="software-grid">${softwareCatalog.map(info=>`<div class="software-card"><div class="software-card-heading"><span class="software-bigicon">${info.icon}</span><div><strong>${safe(info.name)}</strong><div class="small">${safe(info.description)}</div></div></div><div class="software-card-actions">${installedSoftware.has(info.id)?`<span class="software-installed">✓ 已安裝</span><button type="button" data-open="${info.id}" class="primary">開啟</button><button type="button" data-software-remove="${info.id}" class="secondary">移除</button>`:`<button type="button" data-software-install="${info.id}" class="primary">安裝</button>`}</div></div>`).join('')}</div><div class="top-note">這些程式不會存取手機系統或安裝真實 APP；待命會保留內容，模擬重新開機後會恢復預設且移除本次安裝的程式。</div></div>`;
+case 'sticky':return `<div class="window-main software-utility"><h3>🗒️ 便利貼</h3><textarea class="software-sticky" data-utility-sticky maxlength="5000" placeholder="在這裡寫下待辦、提醒或想法…">${safe(softwareState.sticky)}</textarea><p class="small">內容會保留到本次模擬工作階段結束；待命不會清空。</p></div>`;
+case 'todo':return `<div class="window-main software-utility"><h3>✅ 待辦清單</h3><form data-utility-task-form class="software-task-form"><input type="text" maxlength="120" placeholder="輸入新的待辦事項" aria-label="新待辦事項" required><button class="primary" type="submit">新增</button></form><div class="software-task-list">${softwareState.tasks.length?softwareState.tasks.map((item,i)=>`<div class="software-task-row"><label><input type="checkbox" data-utility-task-check="${i}" ${item.done?'checked':''}><span class="${item.done?'software-task-done':''}">${safe(item.text)}</span></label><button type="button" class="secondary" data-utility-task-delete="${i}" aria-label="刪除${safe(item.text)}">刪除</button></div>`).join(''):'<div class="top-note">還沒有待辦事項，先新增第一項吧。</div>'}</div><p class="small">待辦事項只保留在本次模擬開機期間。</p></div>`;
+case 'timer':return `<div class="window-main software-utility"><h3>⏱️ 倒數計時器</h3><div class="software-timer-display" data-utility-timer-display>${timerText(softwareRemaining())}</div><p class="small" data-utility-timer-status>${softwareState.timer.endAt!==null?'倒數中':softwareRemaining()===0?'時間已到':'已暫停／待開始'}</p><label class="software-timer-choose">倒數時間 <select data-utility-timer-minutes aria-label="倒數分鐘數">${[1,3,5,10,15,30].map(minutes=>`<option value="${minutes}" ${softwareState.timer.duration===minutes*60?'selected':''}>${minutes} 分鐘</option>`).join('')}</select></label><div class="software-timer-buttons"><button type="button" class="primary" data-utility-timer="start">▶ 開始／繼續</button><button type="button" class="secondary" data-utility-timer="pause">⏸ 暫停</button><button type="button" class="secondary" data-utility-timer="reset">↶ 重設</button></div><div class="top-note">實際以時間差計算倒數；重新開機後恢復預設。計時提示需保持網頁開啟，iPhone 背景執行可能受系統限制。</div></div>`;
 case 'youtube':return youtubeHtml(w);
 case 'browser':return `<div class="toolbar"><span>🌐</span><input id="fake-url" style="flex:1" value="yiqi://welcome" aria-label="模擬網址"><button data-action="browse">前往</button></div><div class="browser-page"><h2>歡迎使用億柒瀏覽器</h2><p>這是一個懷舊網頁瀏覽器模擬視窗，可以使用下面的書籤。</p><p><button class="secondary" data-action="fakeHome">🏠 首頁</button> <button class="secondary" data-action="fakeHelp">📖 使用說明</button></p><p id="browser-output" class="top-note">提示：輸入真實 https:// 網址並按「前往」，會使用新分頁開啟，不會在模擬視窗載入。</p></div>`;
-case 'about':return `<div class="window-main"><div class="app-card"><h3>✨ 億柒懷舊系統／YIQI Talk</h3><p><b>YIQI Retro Desktop · 版本 v0.4.2</b></p><p>獨立開發的 Windows XP 風格純網頁模擬系統，包含開機、登入、桌面、關機、重新啟動、待命、模擬聊天、小工具，以及 YouTube 官方嵌入式播放器和 YIQI XP 專屬桌布。</p><p>不是真正的 Windows，也不是 Microsoft 官方產品。YIQI Talk 內的好友與聊天皆為虛擬角色，無法和真實使用者通訊。</p><p>網站不需要帳號或伺服器。所有模擬檔案、聊天紀錄與多數設定每次開機會自動恢復預設；只有是否允許跳過開機動畫的開關會保留。</p></div><div class="top-note">製作原則：不採用 Windows 原版圖像、商標圖樣或受版權保護的音效。</div></div>`;
+case 'about':return `<div class="window-main"><div class="app-card"><h3>✨ 億柒懷舊系統／YIQI Talk</h3><p><b>YIQI Retro Desktop · 版本 v0.5.0</b></p><p>獨立開發的 Windows XP 風格純網頁模擬系統，包含開機、登入、桌面、關機、重新啟動、待命、模擬聊天、小工具，以及 YouTube 官方嵌入式播放器、YIQI XP 專屬桌布與可實際操作的內建軟體中心。</p><p>不是真正的 Windows，也不是 Microsoft 官方產品。YIQI Talk 內的好友與聊天皆為虛擬角色，無法和真實使用者通訊。</p><p>網站不需要帳號或伺服器。所有模擬檔案、聊天紀錄與多數設定每次開機會自動恢復預設；只有是否允許跳過開機動畫的開關會保留。</p></div><div class="top-note">製作原則：不採用 Windows 原版圖像、商標圖樣或受版權保護的音效。</div></div>`;
 default:return `<div class="window-main">此程式尚未提供。</div>`}}
 function renderExplorer(w){if(w.app==='bin')return `<div class="toolbar"><b>🗑️ 資源回收筒</b><button data-action="emptyBin" ${!bin.length?'disabled':''}>清空資源回收筒</button></div><div class="explorer-grid">${bin.length?bin.map((f,i)=>`<div class="file-tile"><span class="file-symbol">📄</span>${safe(f.name)}<div class="file-actions"><button data-restore="${i}">還原</button></div></div>`).join(''):'<p class="small">資源回收筒是空的。</p>'}</div><div class="window-status">這裡僅管理模擬檔案。</div>`;
 const docs=w.app==='documents'||w.arg==='docs';const title=docs?'我的文件':'我的電腦';return `<div class="toolbar"><button data-action="goComputer">🖥️ 我的電腦</button><button data-action="goDocuments">📁 我的文件</button>${docs?'<button data-action="newNote">✚ 新增文字文件</button>':''}</div><div class="window-status">📍 ${title}</div><div class="explorer-grid">${docs?files.map((f,i)=>`<div class="file-tile"><button class="file-tile" style="min-height:auto" data-file="${safe(f.name)}"><span class="file-symbol">📄</span>${safe(f.name)}</button><div class="file-actions"><button data-delete="${safe(f.name)}">刪除</button></div></div>`).join('')||'<p class="small">這裡沒有檔案。</p>':`<button class="file-tile" data-open="documents"><span class="file-symbol">📁</span>我的文件</button><button class="file-tile" data-open="bin"><span class="file-symbol">🗑️</span>資源回收筒</button><button class="file-tile" data-action="fakeDrive"><span class="file-symbol">💽</span>本機磁碟 (C:)</button><button class="file-tile" data-action="fakeDrive"><span class="file-symbol">💿</span>光碟機 (D:)</button>`}</div><div class="window-status">模擬檔案系統 · 不會讀取裝置真實磁碟</div>`}
@@ -984,7 +1077,20 @@ function selectMusicTrack(index){
 }
 let calcState={display:'0',a:null,op:null,fresh:false};function calcPress(x){let s=calcState;if(x==='C'){calcState={display:'0',a:null,op:null,fresh:false};s=calcState}else if(x==='←'){s.display=s.display.length>1?s.display.slice(0,-1):'0'}else if(/[0-9]/.test(x)&&x.length===1){s.display=(s.fresh||s.display==='0')?x:s.display+x;s.fresh=false}else if(x==='.'){if(s.fresh){s.display='0';s.fresh=false}if(!s.display.includes('.'))s.display+='.'}else if(x==='±'){s.display=String(-Number(s.display))}else if(x==='%'){s.display=String(Number(s.display)/100)}else if(['+','−','×','÷'].includes(x)){if(s.a!==null&&s.op&&!s.fresh)calcPress('=');s.a=Number(s.display);s.op=x;s.fresh=true}else if(x==='='){if(s.a!==null&&s.op){const b=Number(s.display),res=({'+':()=>s.a+b,'−':()=>s.a-b,'×':()=>s.a*b,'÷':()=>b===0?NaN:s.a/b})[s.op]();s.display=Number.isFinite(res)?String(Number(res.toFixed(9))):'錯誤';s.a=null;s.op=null;s.fresh=true}}const el=$('#calc-display');if(el)el.textContent=s.display}
 function action(name,el){switch(name){case 'ytalkTheme':{const name=(el.dataset.themeName||'aqua').trim();if(!ytalkThemes[name])return;ymSession.theme=name;refreshTalkWindows();toast('已切換為 '+ytalkThemeName(name)+' 主題（重新開機恢復水藍）');break}case 'saveNote':{const w=wins.find(w=>w.id===el.closest('.window')?.id.slice(4));if(!w)return;const textarea=el.closest('.window')?.querySelector('[data-note-edit]');if(textarea)noteDrafts[noteFileName(w)]=textarea.value;saveNoteDraft(w);toast('已儲存：'+noteFileName(w)+'（模擬重新開機會還原預設）');break}case 'newNote':{const wanted=prompt('新文件名稱（不需要輸入副檔名）','我的筆記');if(wanted===null)return;let name=wanted.trim().replace(/[\\/:*?"<>|]/g,'').slice(0,40);if(!name){toast('請輸入有效的名稱');return}if(!name.endsWith('.txt'))name+='.txt';if(files.some(f=>f.name===name)){toast('已有相同名稱的文件');return}files.push({name,content:''});store(KEYS.files,files);const d=wins.find(x=>x.id==='documents');if(d)refresh(d);openWin('notepad',name);break}case 'saveName':{const name=$('#username-input')?.value?.trim();if(!name)return toast('名稱不可空白');cfg.name=name.slice(0,22);saveSettings();refresh(wins.find(x=>x.app==='messenger'));toast('已暫時修改名稱（重新開機會還原）');break}case 'goComputer':openWin('explorer');break;case 'goDocuments':openWin('documents');break;case 'emptyBin':if(!bin.length)return;if(confirm('確定要清空模擬資源回收筒嗎？')){bin=[];store(KEYS.bin,bin);refresh(wins.find(x=>x.id==='bin'));toast('已清空；重新開機仍會恢復預設檔案')}break;case 'fakeDrive':toast('這是模擬磁碟，沒有存取裝置真實 C 槽或 D 槽。');break;case 'emote':{const id=el.dataset.chatId;const inp=document.querySelector(`[data-chat-form="${id}"] input`);if(inp){inp.value+='😊';inp.focus()}break}case 'nudge':{const id='chat_'+el.dataset.chatId;const win=document.getElementById('win-'+id);win?.classList.remove('shake');void win?.offsetWidth;win?.classList.add('shake');chirp(780,.07);setTimeout(()=>chirp(1010,.16),110);toast('已發送模擬震動！');const session=epoch,seq=ymSession.seq,friend=el.dataset.chatId;setTimeout(()=>completeTalkReply(friend,'',session,seq,'nudge'),700);break}case 'clearChat':{const id=el.dataset.chatId;if(confirm('清除這個虛擬好友的本機模擬聊天紀錄？')){delete chats[id];store(KEYS.chat,chats);refresh(wins.find(x=>x.id==='chat_'+id))}break}case 'paintClear':{const c=$('#paint-canvas');if(c){const ctx=c.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,c.width,c.height)}break}case 'paintSave':{const c=$('#paint-canvas');if(!c)return;const a=document.createElement('a');a.href=c.toDataURL('image/png');a.download='億柒小畫家.png';a.click();toast('圖片已交由瀏覽器下載（手機可查看下載項目）');break}case 'toggleMusic':playMusic();break;case 'nextTrack':case 'prevTrack':selectMusicTrack(melodyTrack+(name==='nextTrack'?1:songs.length-1));break;case 'fakeHome':{$('#fake-url').value='yiqi://welcome';$('#browser-output').textContent='歡迎回到億柒首頁！這是網頁內的模擬瀏覽器。';break}case 'fakeHelp':{$('#fake-url').value='yiqi://help';$('#browser-output').textContent='小提示：桌面圖示可以開啟程式；按開始選單可以關機、登出與重新開機。';break}case 'browse':{const url=$('#fake-url')?.value?.trim()||'';if(/^https?:\/\//i.test(url)){window.open(url,'_blank','noopener,noreferrer');$('#browser-output').textContent='已嘗試以新分頁開啟網址；可能被瀏覽器阻擋。'}else $('#browser-output').textContent='模擬瀏覽器只支援 yiqi:// 頁面；真實網頁請輸入完整 https:// 網址。';break}}}
-app.addEventListener('click',e=>{const global=e.target.closest('[data-global]');if(global){const g=global.dataset.global;if(g==='poweron')boot();else if(g==='skipboot')showWelcome();else if(g==='login')login();else if(g==='wake'){const overlay=$('#standby-overlay');if(overlay){overlay.remove();state='desktop';const rotated=standbyViewport&&(standbyViewport.width!==innerWidth||standbyViewport.height!==innerHeight);standbyViewport=null;if(rotated)fitExistingWindowsToViewport();lastDesktopViewportWidth=innerWidth;syncMaximizedWindowsToDesktopScroll();}else renderDesktop();resumeDeferredTalkReplies();}else if(g==='start'){volumeOpen=false;windowToolsOpen=false;renderWindowTools();renderVolumePanel();showStart=!showStart;renderStart();chirp(770,.04)}else if(g==='volume'){volumeOpen=!volumeOpen;windowToolsOpen=false;renderWindowTools();showStart=false;renderStart();renderVolumePanel()}else if(g==='windowtools'){windowToolsOpen=!windowToolsOpen;volumeOpen=false;showStart=false;renderStart();renderVolumePanel();renderWindowTools()}else if(g==='arrangecascade'||g==='arrangetile'||g==='showdesktop'||g==='restorewindows'||g==='resetwindows'){windowToolsOpen=false;renderWindowTools();if(g==='arrangecascade')arrangeWindows('cascade');else if(g==='arrangetile')arrangeWindows('tile');else if(g==='showdesktop')showDesktopWindows();else if(g==='restorewindows')restoreDesktopWindows();else resetDesktopWindowSizes()}else if(g==='voltest'){playPowerSound('startup',true)}else if(g==='teststartup'){playPowerSound('startup',true)}else if(g==='testshutdown'){playPowerSound('shutdown',true)}else if(g==='testtalkmessage'){playTalkMessageSound(true)}else if(g==='powerdialog'){showStart=false;renderStart();powerWarningMode=null;powerDialog=true;renderDialog()}else if(g==='noteclosecancel'){noteClosePendingId=null;renderDialog()}
+app.addEventListener('click',e=>{
+ const installBtn=e.target.closest('[data-software-install]');if(installBtn){installSoftware(installBtn.dataset.softwareInstall);return}
+ const removeBtn=e.target.closest('[data-software-remove]');if(removeBtn){uninstallSoftware(removeBtn.dataset.softwareRemove);return}
+ const todoDelete=e.target.closest('[data-utility-task-delete]');if(todoDelete){const i=Number(todoDelete.dataset.utilityTaskDelete);if(Number.isInteger(i)&&i>=0&&i<softwareState.tasks.length){softwareState.tasks.splice(i,1);refresh(wins.find(w=>w.app==='todo'))}return}
+ const timerBtn=e.target.closest('[data-utility-timer]');if(timerBtn){
+  const t=softwareState.timer,mode=timerBtn.dataset.utilityTimer;
+  if(mode==='start'){
+   if(t.endAt===null){if(t.remaining===0)t.remaining=t.duration;t.endAt=Date.now()+t.remaining*1000;t.doneNotified=false;}
+   ensureSoftwareTimer();
+  }else if(mode==='pause'&&t.endAt!==null){t.remaining=softwareRemaining();t.endAt=null}
+  else if(mode==='reset'){t.remaining=t.duration;t.endAt=null;t.doneNotified=false}
+  tickSoftwareTimer();return;
+ }
+ const global=e.target.closest('[data-global]');if(global){const g=global.dataset.global;if(g==='poweron')boot();else if(g==='skipboot')showWelcome();else if(g==='login')login();else if(g==='wake'){const overlay=$('#standby-overlay');if(overlay){overlay.remove();state='desktop';const rotated=standbyViewport&&(standbyViewport.width!==innerWidth||standbyViewport.height!==innerHeight);standbyViewport=null;if(rotated)fitExistingWindowsToViewport();lastDesktopViewportWidth=innerWidth;syncMaximizedWindowsToDesktopScroll();}else renderDesktop();resumeSoftwareAfterStandby();resumeDeferredTalkReplies();}else if(g==='start'){volumeOpen=false;windowToolsOpen=false;renderWindowTools();renderVolumePanel();showStart=!showStart;renderStart();chirp(770,.04)}else if(g==='volume'){volumeOpen=!volumeOpen;windowToolsOpen=false;renderWindowTools();showStart=false;renderStart();renderVolumePanel()}else if(g==='windowtools'){windowToolsOpen=!windowToolsOpen;volumeOpen=false;showStart=false;renderStart();renderVolumePanel();renderWindowTools()}else if(g==='arrangecascade'||g==='arrangetile'||g==='showdesktop'||g==='restorewindows'||g==='resetwindows'){windowToolsOpen=false;renderWindowTools();if(g==='arrangecascade')arrangeWindows('cascade');else if(g==='arrangetile')arrangeWindows('tile');else if(g==='showdesktop')showDesktopWindows();else if(g==='restorewindows')restoreDesktopWindows();else resetDesktopWindowSizes()}else if(g==='voltest'){playPowerSound('startup',true)}else if(g==='teststartup'){playPowerSound('startup',true)}else if(g==='testshutdown'){playPowerSound('shutdown',true)}else if(g==='testtalkmessage'){playTalkMessageSound(true)}else if(g==='powerdialog'){showStart=false;renderStart();powerWarningMode=null;powerDialog=true;renderDialog()}else if(g==='noteclosecancel'){noteClosePendingId=null;renderDialog()}
  else if(g==='noteclosesave'||g==='noteclosediscard'){
   const id=noteClosePendingId,w=wins.find(w=>w.id===id);
   if(g==='noteclosesave'&&w)saveNoteDraft(w);
@@ -1002,12 +1108,21 @@ if(e.target.closest('[data-shortcut]')&&suppressIconClick){suppressIconClick=fal
 const winbutton=e.target.closest('[data-win]');if(winbutton){windowAction(winbutton.dataset.win,winbutton.dataset.id);return}const task=e.target.closest('[data-task]');if(task){toggleTask(task.dataset.task);return}const open=e.target.closest('[data-open]');if(open){openWin(open.dataset.open);return}const chat=e.target.closest('[data-chat]');if(chat){openWin('chat',chat.dataset.chat);alerts=alerts.filter(n=>n.friendId!==chat.dataset.chat||n.kind==='invite');renderAlerts();return}const file=e.target.closest('[data-file]');if(file){openWin('notepad',file.dataset.file);return}const del=e.target.closest('[data-delete]');if(del){const name=del.dataset.delete;const i=files.findIndex(f=>f.name===name);if(i>=0){bin.push(files.splice(i,1)[0]);store(KEYS.files,files);store(KEYS.bin,bin);refresh(wins.find(x=>x.id==='documents'));toast('已移到資源回收筒；重新開機會恢復原始檔案')}return}const restore=e.target.closest('[data-restore]');if(restore){const i=Number(restore.dataset.restore);if(bin[i]){if(files.some(f=>f.name===bin[i].name))return toast('文件名稱重複，無法還原');files.push(bin.splice(i,1)[0]);store(KEYS.files,files);store(KEYS.bin,bin);refresh(wins.find(x=>x.id==='bin'));toast('已還原文件')}return}const wall=e.target.closest('[data-wallpaper]');if(wall){cfg.wallpaper=wall.dataset.wallpaper;saveSettings();$('#desktop').className='desktop wallpaper-'+cfg.wallpaper;refresh(wins.find(x=>x.id==='settings'));return}const calc=e.target.closest('[data-calc]');if(calc){calcPress(calc.dataset.calc);return}const a=e.target.closest('[data-action]');if(a){action(a.dataset.action,a);return}
 const w=e.target.closest('.window');if(w)activate(w.id.replace(/^win-/,''));else if(showStart&&!e.target.closest('.start-menu')){showStart=false;renderStart()}if(volumeOpen&&!e.target.closest('.volume-popover')&&!e.target.closest('.tray-speaker')){volumeOpen=false;renderVolumePanel()}if(windowToolsOpen&&!e.target.closest('.window-tools-panel')&&!e.target.closest('.window-tools-btn')){windowToolsOpen=false;renderWindowTools()}});
 app.addEventListener('submit',e=>{
+ const todoForm=e.target.closest('[data-utility-task-form]');if(todoForm){
+  e.preventDefault();const inp=todoForm.querySelector('input');const txt=inp?.value.trim();
+  if(txt&&softwareState.tasks.length<100){softwareState.tasks.push({text:txt.slice(0,120),done:false});refresh(wins.find(w=>w.app==='todo'));}
+  else if(txt)toast('最多只能新增 100 項待辦事項');
+  return;
+ }
  const ytForm=e.target.closest('[data-yt-form]');if(ytForm){e.preventDefault();loadYoutubeVideo(ytForm);return;}
  const loginForm=e.target.closest('[data-ym-login]');
  if(loginForm){e.preventDefault();mockYmSignIn(loginForm);return;}
  const form=e.target.closest('[data-chat-form]');if(!form)return;e.preventDefault();const inp=form.querySelector('input');const message=inp.value;inp.value='';sendMessage(form.dataset.chatForm,message);const visible=document.querySelector(`[data-chat-form="${form.dataset.chatForm}"] input`);if(visible)visible.focus()});
-app.addEventListener('input',e=>{const t=e.target;if(t.id==='ytalk-friend-search'){filterTalkFriends(t.value);return}if(t.id==='master-volume'){cfg.volume=Math.min(100,Math.max(0,Number(t.value)||0));saveSettings();$('#volume-value').textContent=cfg.volume+'%';const speaker=$('.tray-speaker');if(speaker)speaker.textContent=cfg.muted||cfg.volume===0?'🔇':cfg.volume<40?'🔉':'🔊';return}if(t.matches('[data-note-edit]')){const name=t.getAttribute('data-note-edit');noteDrafts[name]=t.value;const w=wins.find(w=>w.id===t.closest('.window')?.id.slice(4));updateNoteStatus(w);}});
-app.addEventListener('change',e=>{const t=e.target;if(t.matches('[data-ytalk-presence]')){if(talkPresences[t.value]){ymSession.presence=t.value;ymSession.invisible=t.value==='invisible';toast('狀態已改為：'+talkPresences[t.value]+'（重新開機會還原）');}return;}if(t.id==='volume-mute'){cfg.muted=t.checked;saveSettings();renderVolumePanel();return}if(t.dataset.soundToggle){cfg[t.dataset.soundToggle]=t.checked;saveSettings();renderVolumePanel();return}if(t.dataset.setting){const key=t.dataset.setting;cfg[key]=!!t.checked;if(key==='skip')writeBootSkipPreference(cfg.skip);saveSettings();renderVolumePanel();toast(key==='skip'?'已保存跳過開機動畫設定（模擬重開機仍保留）':'設定已套用（重新開機會還原）')}if(t.id==='player-track'){selectMusicTrack(Number(t.value))}});
+app.addEventListener('input',e=>{const t=e.target;if(t.matches('[data-utility-sticky]')){softwareState.sticky=t.value;return}if(t.id==='ytalk-friend-search'){filterTalkFriends(t.value);return}if(t.id==='master-volume'){cfg.volume=Math.min(100,Math.max(0,Number(t.value)||0));saveSettings();$('#volume-value').textContent=cfg.volume+'%';const speaker=$('.tray-speaker');if(speaker)speaker.textContent=cfg.muted||cfg.volume===0?'🔇':cfg.volume<40?'🔉':'🔊';return}if(t.matches('[data-note-edit]')){const name=t.getAttribute('data-note-edit');noteDrafts[name]=t.value;const w=wins.find(w=>w.id===t.closest('.window')?.id.slice(4));updateNoteStatus(w);}});
+app.addEventListener('change',e=>{const t=e.target;
+ if(t.matches('[data-utility-task-check]')){const i=Number(t.dataset.utilityTaskCheck);if(Number.isInteger(i)&&softwareState.tasks[i]){softwareState.tasks[i].done=!!t.checked;refresh(wins.find(w=>w.app==='todo'))}return}
+ if(t.matches('[data-utility-timer-minutes]')){const minutes=Number(t.value);if([1,3,5,10,15,30].includes(minutes)){softwareState.timer={duration:minutes*60,remaining:minutes*60,endAt:null,doneNotified:false};tickSoftwareTimer()}return}
+if(t.matches('[data-ytalk-presence]')){if(talkPresences[t.value]){ymSession.presence=t.value;ymSession.invisible=t.value==='invisible';toast('狀態已改為：'+talkPresences[t.value]+'（重新開機會還原）');}return;}if(t.id==='volume-mute'){cfg.muted=t.checked;saveSettings();renderVolumePanel();return}if(t.dataset.soundToggle){cfg[t.dataset.soundToggle]=t.checked;saveSettings();renderVolumePanel();return}if(t.dataset.setting){const key=t.dataset.setting;cfg[key]=!!t.checked;if(key==='skip')writeBootSkipPreference(cfg.skip);saveSettings();renderVolumePanel();toast(key==='skip'?'已保存跳過開機動畫設定（模擬重開機仍保留）':'設定已套用（重新開機會還原）')}if(t.id==='player-track'){selectMusicTrack(Number(t.value))}});
 app.addEventListener('pointerdown',e=>{
  if(state!=='desktop')return;
  const icon=e.target.closest('[data-shortcut]');if(!icon||e.button!==0)return;
