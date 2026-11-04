@@ -701,11 +701,32 @@ case 'calculator':return `<div class="window-main"><div class="calc"><div class=
 case 'paint':return `<div class="paint-container"><div class="paint-tools"><label>畫筆顏色 <input type="color" id="paint-color" value="#2b60c0"></label><label>粗細 <input type="range" id="paint-size" min="1" max="24" value="4"></label><button class="secondary" data-action="paintClear">清除</button><button class="primary" data-action="paintSave">儲存圖片</button></div><div class="paint-area"><canvas id="paint-canvas" aria-label="繪圖畫布"></canvas></div></div>`;
 case 'player':return `<div class="player-center"><div id="player-disc" class="player-disc"></div><div><strong style="font-size:19px">🎵 懷舊音樂播放器</strong><p class="small">三首節奏與音色不同的原創電子旋律，非商業歌曲</p></div><select id="player-track" aria-label="選擇曲目"><option value="0">01 · 午後藍天</option><option value="1">02 · 像素漫遊</option><option value="2">03 · 夜色星光</option></select><div class="top-note" style="width:100%;text-align:center"><div id="player-track-style">輕快草原 · 三角波</div><div id="player-status" class="small">尚未播放</div></div><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button class="secondary" data-action="prevTrack">⏮ 上一首</button><button class="primary" data-action="toggleMusic" id="player-toggle">▶ 播放</button><button class="secondary" data-action="nextTrack">下一首 ⏭</button></div></div>`;
 case 'browser':return `<div class="toolbar"><span>🌐</span><input id="fake-url" style="flex:1" value="yiqi://welcome" aria-label="模擬網址"><button data-action="browse">前往</button></div><div class="browser-page"><h2>歡迎使用億柒瀏覽器</h2><p>這是一個懷舊網頁瀏覽器模擬視窗，可以使用下面的書籤。</p><p><button class="secondary" data-action="fakeHome">🏠 首頁</button> <button class="secondary" data-action="fakeHelp">📖 使用說明</button></p><p id="browser-output" class="top-note">提示：輸入真實 https:// 網址並按「前往」，會使用新分頁開啟，不會在模擬視窗載入。</p></div>`;
-case 'about':return `<div class="window-main"><div class="app-card"><h3>✨ 億柒懷舊系統／YIQI Talk</h3><p><b>YIQI Retro Desktop · 版本 v0.2.7</b></p><p>獨立開發的 Windows XP 風格純網頁模擬系統，包含開機、登入、桌面、關機、重新啟動、待命、模擬聊天與小工具。</p><p>不是真正的 Windows，也不是 Microsoft 官方產品。YIQI Talk 內的好友與聊天皆為虛擬角色，無法和真實使用者通訊。</p><p>網站不需要帳號或伺服器。所有模擬檔案、聊天紀錄與多數設定每次開機會自動恢復預設；只有是否允許跳過開機動畫的開關會保留。</p></div><div class="top-note">製作原則：不採用 Windows 原版圖像、商標圖樣或受版權保護的音效。</div></div>`;
+case 'about':return `<div class="window-main"><div class="app-card"><h3>✨ 億柒懷舊系統／YIQI Talk</h3><p><b>YIQI Retro Desktop · 版本 v0.2.8</b></p><p>獨立開發的 Windows XP 風格純網頁模擬系統，包含開機、登入、桌面、關機、重新啟動、待命、模擬聊天與小工具。</p><p>不是真正的 Windows，也不是 Microsoft 官方產品。YIQI Talk 內的好友與聊天皆為虛擬角色，無法和真實使用者通訊。</p><p>網站不需要帳號或伺服器。所有模擬檔案、聊天紀錄與多數設定每次開機會自動恢復預設；只有是否允許跳過開機動畫的開關會保留。</p></div><div class="top-note">製作原則：不採用 Windows 原版圖像、商標圖樣或受版權保護的音效。</div></div>`;
 default:return `<div class="window-main">此程式尚未提供。</div>`}}
 function renderExplorer(w){if(w.app==='bin')return `<div class="toolbar"><b>🗑️ 資源回收筒</b><button data-action="emptyBin" ${!bin.length?'disabled':''}>清空資源回收筒</button></div><div class="explorer-grid">${bin.length?bin.map((f,i)=>`<div class="file-tile"><span class="file-symbol">📄</span>${safe(f.name)}<div class="file-actions"><button data-restore="${i}">還原</button></div></div>`).join(''):'<p class="small">資源回收筒是空的。</p>'}</div><div class="window-status">這裡僅管理模擬檔案。</div>`;
 const docs=w.app==='documents'||w.arg==='docs';const title=docs?'我的文件':'我的電腦';return `<div class="toolbar"><button data-action="goComputer">🖥️ 我的電腦</button><button data-action="goDocuments">📁 我的文件</button>${docs?'<button data-action="newNote">✚ 新增文字文件</button>':''}</div><div class="window-status">📍 ${title}</div><div class="explorer-grid">${docs?files.map((f,i)=>`<div class="file-tile"><button class="file-tile" style="min-height:auto" data-file="${safe(f.name)}"><span class="file-symbol">📄</span>${safe(f.name)}</button><div class="file-actions"><button data-delete="${safe(f.name)}">刪除</button></div></div>`).join('')||'<p class="small">這裡沒有檔案。</p>':`<button class="file-tile" data-open="documents"><span class="file-symbol">📁</span>我的文件</button><button class="file-tile" data-open="bin"><span class="file-symbol">🗑️</span>資源回收筒</button><button class="file-tile" data-action="fakeDrive"><span class="file-symbol">💽</span>本機磁碟 (C:)</button><button class="file-tile" data-action="fakeDrive"><span class="file-symbol">💿</span>光碟機 (D:)</button>`}</div><div class="window-status">模擬檔案系統 · 不會讀取裝置真實磁碟</div>`}
-function refresh(w){if(w&&!w.minimized)mountWindow(w)}
+function refresh(w){
+ if(!w||w.minimized)return;
+ // 重建聊天視窗前保留尚未送出的文字與游標位置，避免好友回覆／叮咚／切換主題時清空草稿。
+ let draft=null;
+ if(w.app==='chat'){
+  const oldInput=document.querySelector(`#win-${CSS.escape(w.id)} [data-chat-form] input`);
+  if(oldInput){
+   draft={value:oldInput.value,focused:document.activeElement===oldInput,start:oldInput.selectionStart,end:oldInput.selectionEnd};
+  }
+ }
+ mountWindow(w);
+ if(draft){
+  const input=document.querySelector(`#win-${CSS.escape(w.id)} [data-chat-form] input`);
+  if(input){
+   input.value=draft.value;
+   if(draft.focused){
+    input.focus({preventScroll:true});
+    try{input.setSelectionRange(draft.start,draft.end)}catch(e){}
+   }
+  }
+ }
+}
 function saveSettings(){store(KEYS.settings,cfg)}
 function scrollChat(id){const b=id.startsWith('chat_')?id.slice(5):id;const el=document.getElementById('log-'+b);if(el)el.scrollTop=el.scrollHeight}
 function addChat(id,who,text,forcePopup=false){const b=buddies.find(x=>x.id===id);if(!b)return;const history=chats[id]||[{who:'bot',text:b.intro,time:dateTime()}];history.push({who,text:String(text).slice(0,450),time:dateTime()});chats[id]=history.slice(-100);store(KEYS.chat,chats);if(who==='bot'&&(!ymSession.signedIn))return;const unread=who==='bot'&&!ignoredFriends.has(id)&&(forcePopup||activeId!=='chat_'+id||wins.find(w=>w.id==='chat_'+id)?.minimized);if(unread)talkUnread[id]=(talkUnread[id]||0)+1;refresh(wins.find(x=>x.id==='chat_'+id));if(unread){refresh(wins.find(w=>w.app==='messenger'));renderTasks();}if(who==='bot'&&!ignoredFriends.has(id)){if(forcePopup||activeId!=='chat_'+id)showAlert('message',`${b.name} 傳來新訊息`,String(text).slice(0,120),id);else playTalkMessageSound()}}
@@ -804,7 +825,7 @@ const w=e.target.closest('.window');if(w)activate(w.id.replace(/^win-/,''));else
 app.addEventListener('submit',e=>{
  const loginForm=e.target.closest('[data-ym-login]');
  if(loginForm){e.preventDefault();mockYmSignIn(loginForm);return;}
- const form=e.target.closest('[data-chat-form]');if(!form)return;e.preventDefault();const inp=form.querySelector('input');sendMessage(form.dataset.chatForm,inp.value);inp.value='';inp.focus()});
+ const form=e.target.closest('[data-chat-form]');if(!form)return;e.preventDefault();const inp=form.querySelector('input');const message=inp.value;inp.value='';sendMessage(form.dataset.chatForm,message);const visible=document.querySelector(`[data-chat-form="${form.dataset.chatForm}"] input`);if(visible)visible.focus()});
 app.addEventListener('input',e=>{const t=e.target;if(t.id==='ytalk-friend-search'){filterTalkFriends(t.value);return}if(t.id==='master-volume'){cfg.volume=Math.min(100,Math.max(0,Number(t.value)||0));saveSettings();$('#volume-value').textContent=cfg.volume+'%';const speaker=$('.tray-speaker');if(speaker)speaker.textContent=cfg.muted||cfg.volume===0?'🔇':cfg.volume<40?'🔉':'🔊';return}if(t.matches('[data-note-edit]')){const name=t.getAttribute('data-note-edit');noteDrafts[name]=t.value;const w=wins.find(w=>w.id===t.closest('.window')?.id.slice(4));updateNoteStatus(w);}});
 app.addEventListener('change',e=>{const t=e.target;if(t.matches('[data-ytalk-presence]')){if(talkPresences[t.value]){ymSession.presence=t.value;ymSession.invisible=t.value==='invisible';toast('狀態已改為：'+talkPresences[t.value]+'（重新開機會還原）');}return;}if(t.id==='volume-mute'){cfg.muted=t.checked;saveSettings();renderVolumePanel();return}if(t.dataset.soundToggle){cfg[t.dataset.soundToggle]=t.checked;saveSettings();renderVolumePanel();return}if(t.dataset.setting){const key=t.dataset.setting;cfg[key]=!!t.checked;if(key==='skip')writeBootSkipPreference(cfg.skip);saveSettings();renderVolumePanel();toast(key==='skip'?'已保存跳過開機動畫設定（模擬重開機仍保留）':'設定已套用（重新開機會還原）')}if(t.id==='player-track'){selectMusicTrack(Number(t.value))}});
 app.addEventListener('pointerdown',e=>{
