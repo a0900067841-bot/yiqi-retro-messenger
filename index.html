@@ -237,7 +237,7 @@ html,body{background:#071a36!important;overscroll-behavior:none}
 .note-warning-actions button{font-size:13px;min-height:38px;white-space:normal}
 @media(max-height:500px){.dialog-cover{overflow-y:auto;align-items:start}.dialog{margin:auto}.shutdown-warning .dialog-inner{padding:12px}}
 
-/* YIQI XP v0.5.0 內建軟體中心；下載中心僅啟用經審核、可操作的本地網頁程式 */
+/* YIQI XP v0.5.1 軟體中心穩定性修正；下載中心僅啟用經審核、可操作的本地網頁程式 */
 .software-center,.software-utility{overflow-y:auto;min-height:0;height:100%;box-sizing:border-box}
 .software-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,235px),1fr));gap:12px;margin:14px 0}
 .software-card{padding:14px;border:1px solid #b4cceb;border-radius:8px;background:linear-gradient(#fefeff,#e9f3ff);color:#1a3b64;box-shadow:0 2px 6px #0c3e7914}
@@ -300,9 +300,12 @@ const softwareCatalog=[
 let installedSoftware=new Set();
 const blankSoftwareState=()=>({sticky:'',tasks:[],timer:{duration:300,remaining:300,endAt:null,doneNotified:false}});
 let softwareState=blankSoftwareState(),softwareTimerInterval=null,softwareTimerResumeOnWake=false;
+function stopSoftwareTimerPolling(){
+ if(softwareTimerInterval!==null){clearInterval(softwareTimerInterval);softwareTimerInterval=null}
+}
 function resetSoftwareSession(){
  installedSoftware=new Set();softwareState=blankSoftwareState();softwareTimerResumeOnWake=false;
- if(softwareTimerInterval!==null){clearInterval(softwareTimerInterval);softwareTimerInterval=null}
+ stopSoftwareTimerPolling();
  syncInstalledShortcuts();
 }
 function softwareRemaining(){
@@ -323,12 +326,16 @@ function tickSoftwareTimer(){
  if(label)label.textContent=timerText(softwareRemaining());
  const stateLabel=document.querySelector('[data-utility-timer-status]');
  if(stateLabel)stateLabel.textContent=t.endAt!==null?'倒數中':softwareRemaining()===0?'時間已到':'已暫停／待開始';
+ // No background polling after countdown completes, pauses or resets.
+ if(t.endAt===null)stopSoftwareTimerPolling();
 }
-function ensureSoftwareTimer(){if(softwareTimerInterval===null)softwareTimerInterval=setInterval(tickSoftwareTimer,400)}
+function ensureSoftwareTimer(){if(softwareTimerInterval===null&&softwareState.timer.endAt!==null)softwareTimerInterval=setInterval(tickSoftwareTimer,400)}
 function pauseSoftwareForStandby(){
  const t=softwareState.timer;
  softwareTimerResumeOnWake=t.endAt!==null;
  if(softwareTimerResumeOnWake){t.remaining=softwareRemaining();t.endAt=null;}
+ // While sleeping, keep the saved time but release the interval completely.
+ stopSoftwareTimerPolling();
 }
 function resumeSoftwareAfterStandby(){
  const t=softwareState.timer;
@@ -351,7 +358,11 @@ function uninstallSoftware(id){
  // 移除軟體時也清除本次使用資料，避免重新安裝讀到舊資料。
  if(id==='sticky')softwareState.sticky='';
  if(id==='todo')softwareState.tasks=[];
- if(id==='timer')softwareState.timer={duration:300,remaining:300,endAt:null,doneNotified:false};
+ if(id==='timer'){
+  softwareState.timer={duration:300,remaining:300,endAt:null,doneNotified:false};
+  softwareTimerResumeOnWake=false;
+  stopSoftwareTimerPolling();
+ }
  syncInstalledShortcuts();renderShortcutIcons();renderStart();redrawSoftwareCenter();
  toast(info.name+' 已移除');
 }
@@ -450,7 +461,7 @@ function restoreOnBoot(){
   // 僅清理本模擬網站的舊版儲存資料，絕不清除其他網站的內容。
   try{Object.values(KEYS).forEach(key=>localStorage.removeItem(key))}catch(e){}
 }
-function powerOffScreen(){noteClosePendingId=null;noteDrafts={};volumeOpen=false;state='off';showStart=false;powerDialog=false;stopMusic();wins=[];activeId=null;setScreen(`<section class="screen off-screen"><button class="power-circle" data-global="poweron" aria-label="開啟模擬電腦">⏻</button><div class="power-title">億柒懷舊電腦</div><div class="power-sub">按下電源，啟動懷舊時光<br>Windows XP 風格・純網頁互動模擬</div><div class="power-tag">YIQI RETRO DESKTOP · 2026</div></section>`)}
+function powerOffScreen(){stopSoftwareTimerPolling();noteClosePendingId=null;noteDrafts={};volumeOpen=false;state='off';showStart=false;powerDialog=false;stopMusic();wins=[];activeId=null;setScreen(`<section class="screen off-screen"><button class="power-circle" data-global="poweron" aria-label="開啟模擬電腦">⏻</button><div class="power-title">億柒懷舊電腦</div><div class="power-sub">按下電源，啟動懷舊時光<br>Windows XP 風格・純網頁互動模擬</div><div class="power-tag">YIQI RETRO DESKTOP · 2026</div></section>`)}
 async function boot(){restoreOnBoot();const t=++epoch;state='boot';showStart=false;powerDialog=false;setScreen(`<section class="screen boot-screen"><div class="boot-logo">YIQI<span>XP</span></div><div class="boot-word">億柒懷舊系統</div><div class="boot-bar"></div><div class="boot-step" id="boot-step">正在啟動模擬電腦...</div>${cfg.skip?'<button class="skip-link" data-global="skipboot">跳過開機動畫 ›</button>':''}<div class="app-boot-status">網頁模擬 · 不會啟動真正的作業系統</div></section>`);await nap(speed(2000));if(t!==epoch)return;$('#boot-step').textContent='正在載入桌面與系統設定...';await nap(speed(2400));if(t!==epoch)return;$('#boot-step').textContent='正在啟動 YIQI Talk...';await nap(speed(2400));if(t!==epoch)return;showWelcome()}
 function showWelcome(){++epoch;state='welcome';setScreen(`<section class="screen welcome-screen"><div class="welcome-top">歡迎使用億柒懷舊系統</div><div class="welcome-layout"><div class="welcome-brand"><strong>YIQI <span>XP</span></strong><p>讓熟悉的電腦時光，再次亮起。</p></div><div class="welcome-user"><button class="profile-card" data-global="login"><span class="profile-icon">👤</span><span><b>${safe(cfg.name||'億柒訪客')}</b><small>點擊登入模擬桌面 →</small></span></button></div></div><div class="welcome-bottom">此畫面僅供懷舊體驗，無須輸入真實帳號或密碼</div></section>`)}
 function login(){playPowerSound('startup');state='desktop';renderDesktop()}
@@ -940,7 +951,7 @@ case 'todo':return `<div class="window-main software-utility"><h3>✅ 待辦清�
 case 'timer':return `<div class="window-main software-utility"><h3>⏱️ 倒數計時器</h3><div class="software-timer-display" data-utility-timer-display>${timerText(softwareRemaining())}</div><p class="small" data-utility-timer-status>${softwareState.timer.endAt!==null?'倒數中':softwareRemaining()===0?'時間已到':'已暫停／待開始'}</p><label class="software-timer-choose">倒數時間 <select data-utility-timer-minutes aria-label="倒數分鐘數">${[1,3,5,10,15,30].map(minutes=>`<option value="${minutes}" ${softwareState.timer.duration===minutes*60?'selected':''}>${minutes} 分鐘</option>`).join('')}</select></label><div class="software-timer-buttons"><button type="button" class="primary" data-utility-timer="start">▶ 開始／繼續</button><button type="button" class="secondary" data-utility-timer="pause">⏸ 暫停</button><button type="button" class="secondary" data-utility-timer="reset">↶ 重設</button></div><div class="top-note">實際以時間差計算倒數；重新開機後恢復預設。計時提示需保持網頁開啟，iPhone 背景執行可能受系統限制。</div></div>`;
 case 'youtube':return youtubeHtml(w);
 case 'browser':return `<div class="toolbar"><span>🌐</span><input id="fake-url" style="flex:1" value="yiqi://welcome" aria-label="模擬網址"><button data-action="browse">前往</button></div><div class="browser-page"><h2>歡迎使用億柒瀏覽器</h2><p>這是一個懷舊網頁瀏覽器模擬視窗，可以使用下面的書籤。</p><p><button class="secondary" data-action="fakeHome">🏠 首頁</button> <button class="secondary" data-action="fakeHelp">📖 使用說明</button></p><p id="browser-output" class="top-note">提示：輸入真實 https:// 網址並按「前往」，會使用新分頁開啟，不會在模擬視窗載入。</p></div>`;
-case 'about':return `<div class="window-main"><div class="app-card"><h3>✨ 億柒懷舊系統／YIQI Talk</h3><p><b>YIQI Retro Desktop · 版本 v0.5.0</b></p><p>獨立開發的 Windows XP 風格純網頁模擬系統，包含開機、登入、桌面、關機、重新啟動、待命、模擬聊天、小工具，以及 YouTube 官方嵌入式播放器、YIQI XP 專屬桌布與可實際操作的內建軟體中心。</p><p>不是真正的 Windows，也不是 Microsoft 官方產品。YIQI Talk 內的好友與聊天皆為虛擬角色，無法和真實使用者通訊。</p><p>網站不需要帳號或伺服器。所有模擬檔案、聊天紀錄與多數設定每次開機會自動恢復預設；只有是否允許跳過開機動畫的開關會保留。</p></div><div class="top-note">製作原則：不採用 Windows 原版圖像、商標圖樣或受版權保護的音效。</div></div>`;
+case 'about':return `<div class="window-main"><div class="app-card"><h3>✨ 億柒懷舊系統／YIQI Talk</h3><p><b>YIQI Retro Desktop · 版本 v0.5.1</b></p><p>獨立開發的 Windows XP 風格純網頁模擬系統，包含開機、登入、桌面、關機、重新啟動、待命、模擬聊天、小工具，以及 YouTube 官方嵌入式播放器、YIQI XP 專屬桌布與可實際操作的內建軟體中心。</p><p>不是真正的 Windows，也不是 Microsoft 官方產品。YIQI Talk 內的好友與聊天皆為虛擬角色，無法和真實使用者通訊。</p><p>網站不需要帳號或伺服器。所有模擬檔案、聊天紀錄與多數設定每次開機會自動恢復預設；只有是否允許跳過開機動畫的開關會保留。</p></div><div class="top-note">製作原則：不採用 Windows 原版圖像、商標圖樣或受版權保護的音效。</div></div>`;
 default:return `<div class="window-main">此程式尚未提供。</div>`}}
 function renderExplorer(w){if(w.app==='bin')return `<div class="toolbar"><b>🗑️ 資源回收筒</b><button data-action="emptyBin" ${!bin.length?'disabled':''}>清空資源回收筒</button></div><div class="explorer-grid">${bin.length?bin.map((f,i)=>`<div class="file-tile"><span class="file-symbol">📄</span>${safe(f.name)}<div class="file-actions"><button data-restore="${i}">還原</button></div></div>`).join(''):'<p class="small">資源回收筒是空的。</p>'}</div><div class="window-status">這裡僅管理模擬檔案。</div>`;
 const docs=w.app==='documents'||w.arg==='docs';const title=docs?'我的文件':'我的電腦';return `<div class="toolbar"><button data-action="goComputer">🖥️ 我的電腦</button><button data-action="goDocuments">📁 我的文件</button>${docs?'<button data-action="newNote">✚ 新增文字文件</button>':''}</div><div class="window-status">📍 ${title}</div><div class="explorer-grid">${docs?files.map((f,i)=>`<div class="file-tile"><button class="file-tile" style="min-height:auto" data-file="${safe(f.name)}"><span class="file-symbol">📄</span>${safe(f.name)}</button><div class="file-actions"><button data-delete="${safe(f.name)}">刪除</button></div></div>`).join('')||'<p class="small">這裡沒有檔案。</p>':`<button class="file-tile" data-open="documents"><span class="file-symbol">📁</span>我的文件</button><button class="file-tile" data-open="bin"><span class="file-symbol">🗑️</span>資源回收筒</button><button class="file-tile" data-action="fakeDrive"><span class="file-symbol">💽</span>本機磁碟 (C:)</button><button class="file-tile" data-action="fakeDrive"><span class="file-symbol">💿</span>光碟機 (D:)</button>`}</div><div class="window-status">模擬檔案系統 · 不會讀取裝置真實磁碟</div>`}
