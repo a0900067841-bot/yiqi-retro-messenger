@@ -200,7 +200,7 @@ html,body{background:#071a36!important;overscroll-behavior:none}
 .desktop{--sim-desktop-width:760px}
 .desktop-workspace,.taskbar-track{width:max(100%,var(--sim-desktop-width))}
 .desktop-workspace .window{max-height:calc(100% - 10px)}
-.desktop-workspace .window.maximized{left:0!important;top:0!important;width:min(100%,100vw)!important;height:100%!important;max-height:100%!important}
+.desktop-workspace .window.maximized{left:var(--max-left,0px)!important;top:0!important;width:min(100%,100vw)!important;height:100%!important;max-height:100%!important}
 @media(max-width:700px){
  .desktop-workspace .window:not(.maximized){max-height:calc(100% - 10px);height:min(var(--win-height,calc(100% - 14px)),calc(100% - 10px))!important}
 }
@@ -208,6 +208,8 @@ html,body{background:#071a36!important;overscroll-behavior:none}
 .dialog-inner{min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .dialog-cover{padding:8px}
 
+/* v0.3.1: Keep maximized / arranged / reset windows within the currently visible
+   horizontal desktop slice on narrow screens. No additional applications. */
 /* v0.2.6: existing notepad unsaved-draft confirmation; no additional apps */
 .note-warning-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:16px}
 .note-warning-actions button{font-size:13px;min-height:38px;white-space:normal}
@@ -366,6 +368,14 @@ function shortcutPosition(id,index){
  const mobile=innerWidth<=700;
  return desktopIconPositions[id]||{x:12+Math.floor(index/rows)*(mobile?80:90),y:12+(index%rows)*(mobile?82:90)};
 }
+function syncMaximizedWindowsToDesktopScroll(){
+ const sc=$('#desktop-scroll');if(!sc)return;
+ for(const w of wins){
+  if(!w.maximized)continue;
+  const el=document.getElementById('win-'+w.id);
+  if(el)el.style.setProperty('--max-left',sc.scrollLeft+'px');
+ }
+}
 function bindDesktopHorizontalScroll(){
  const desktopScroll=$('#desktop-scroll');
  const taskbarWrap=$('#taskbar-wrap');
@@ -376,7 +386,7 @@ function bindDesktopHorizontalScroll(){
   if(Math.abs(from.scrollLeft-to.scrollLeft)>.5)to.scrollLeft=from.scrollLeft;
  };
  taskbarWrap.scrollLeft=desktopScroll.scrollLeft||0;
- desktopScroll.addEventListener('scroll',()=>sync(desktopScroll,taskbarWrap),{passive:true});
+ desktopScroll.addEventListener('scroll',()=>{sync(desktopScroll,taskbarWrap);syncMaximizedWindowsToDesktopScroll()},{passive:true});
  taskbarWrap.addEventListener('scroll',()=>sync(taskbarWrap,desktopScroll),{passive:true});
 }
 // Keep existing windows visible after portrait/landscape switches.
@@ -516,6 +526,7 @@ function renderWindowTools(){
 function applyWindowGeometry(w){
  const el=document.getElementById('win-'+w.id);if(!el)return mountWindow(w);
  el.style.left=w.x+'px';el.style.top=w.y+'px';el.style.width=w.width+'px';el.style.height=w.height+'px';
+ el.style.setProperty('--max-left',($('#desktop-scroll')?.scrollLeft||0)+'px');
  if(w.customPlacement){el.style.setProperty('--win-left',w.x+'px');el.style.setProperty('--win-top',w.y+'px')}
  else{el.style.removeProperty('--win-left');el.style.removeProperty('--win-top')}
  if(w.customSize){el.style.setProperty('--win-width',w.width+'px');el.style.setProperty('--win-height',w.height+'px')}
@@ -524,26 +535,38 @@ function applyWindowGeometry(w){
  const maxButton=el.querySelector('[data-win="max"]');if(maxButton)maxButton.textContent=w.maximized?'❐':'□';
 }
 function arrangeWindows(mode){
- const ws=$('#desktop-workspace');if(!ws)return;
+ const ws=$('#desktop-workspace'),sc=$('#desktop-scroll');if(!ws||!sc)return;
  const list=wins.filter(w=>!w.minimized);if(!list.length){toast('目前沒有開啟中的視窗');return}
- const mobile=innerWidth<=700, areaWidth=Math.max(290,Math.min(innerWidth,ws.clientWidth)),areaHeight=Math.max(230,ws.clientHeight);
+ const mobile=sc.clientWidth<=700,viewLeft=sc.scrollLeft;
+ const areaWidth=Math.max(290,Math.min(sc.clientWidth,ws.clientWidth));
+ const areaHeight=Math.max(200,ws.clientHeight);
+ let actualMode=mode;
  if(mode==='tile'){
   const columns=mobile?1:Math.min(2,list.length),rows=Math.ceil(list.length/columns),gap=8;
+  // No point drawing narrow, unusable windows that disappear beneath the taskbar.
+  if((areaHeight/rows-gap*2)<180||(areaWidth/columns-gap*2)<280){actualMode='cascade'}
+  else{
+   list.forEach((w,i)=>{
+    const col=i%columns,row=Math.floor(i/columns),cw=Math.floor(areaWidth/columns),ch=Math.floor(areaHeight/rows);
+    w.x=viewLeft+col*cw+gap;w.y=row*ch+gap;
+    w.width=Math.min(cw-gap*2,Math.max(280,areaWidth-(w.x-viewLeft)-gap));
+    w.height=Math.max(180,ch-gap*2);
+    w.maximized=false;w.customPlacement=true;w.customSize=true;applyWindowGeometry(w);
+   });
+  }
+ }
+ if(actualMode==='cascade'){
   list.forEach((w,i)=>{
-   const col=i%columns,row=Math.floor(i/columns),cw=Math.floor(areaWidth/columns),ch=Math.floor(areaHeight/rows);
-   w.x=col*cw+gap;w.y=row*ch+gap;w.width=Math.max(280,cw-gap*2);w.height=Math.max(180,ch-gap*2);
-   w.maximized=false;w.customPlacement=true;w.customSize=true;applyWindowGeometry(w);
-  });
- }else{
-  list.forEach((w,i)=>{
-   w.x=10+(i%7)*(mobile?16:31);w.y=10+(i%7)*(mobile?18:28);
-   w.width=Math.min(mobile?Math.max(280,areaWidth-35):490,Math.max(280,areaWidth-w.x-10));
-   w.height=Math.min(440,Math.max(210,areaHeight-w.y-15));
+   const offsetX=Math.min(10+(i%7)*(mobile?16:31),Math.max(8,areaWidth-290));
+   w.x=viewLeft+offsetX;
+   w.y=Math.min(10+(i%7)*(mobile?18:28),Math.max(8,areaHeight-205));
+   w.width=Math.min(mobile?Math.max(280,areaWidth-35):490,Math.max(280,areaWidth-offsetX-10));
+   w.height=Math.min(440,Math.max(180,areaHeight-w.y-15));
    w.maximized=false;w.customPlacement=true;w.customSize=true;applyWindowGeometry(w);
   });
  }
  activate(list[list.length-1].id);
- toast(mode==='tile'?'已將視窗並排':'已將視窗層疊');
+ toast(mode==='tile'&&actualMode==='cascade'?'螢幕空間不足，已改為視窗層疊':actualMode==='tile'?'已將視窗並排':'已將視窗層疊');
 }
 function showDesktopWindows(){
  for(const w of wins){w.minimized=true;const el=document.getElementById('win-'+w.id);if(el)el.style.display='none'}
@@ -555,10 +578,17 @@ function restoreDesktopWindows(){
  activate(wins[wins.length-1].id);toast('已還原所有視窗');
 }
 function resetDesktopWindowSizes(){
- for(const w of wins){w.maximized=false;w.customPlacement=false;w.customSize=false;w.x=5;w.y=7;
-  w.width=w.app==='messenger'?385:w.app==='chat'?480:w.app==='settings'?600:w.app==='paint'?720:w.app==='notepad'?590:640;
-  w.height=w.app==='messenger'?645:w.app==='chat'?460:460;
-  if(!w.minimized)applyWindowGeometry(w)}
+ const sc=$('#desktop-scroll');
+ const left=sc?.scrollLeft||0,viewW=sc?.clientWidth||innerWidth,viewH=sc?.clientHeight||innerHeight;
+ for(const w of wins){
+  w.maximized=false;w.customPlacement=true;w.customSize=true;
+  w.x=left+5;w.y=7;
+  const naturalW=w.app==='messenger'?385:w.app==='chat'?480:w.app==='settings'?600:w.app==='paint'?720:w.app==='notepad'?590:640;
+  const naturalH=w.app==='messenger'?645:w.app==='chat'?460:460;
+  w.width=Math.max(280,Math.min(naturalW,viewW-10));
+  w.height=Math.max(180,Math.min(naturalH,viewH-14));
+  if(!w.minimized)applyWindowGeometry(w)
+ }
  if(activeId)activate(activeId);toast('已恢復目前視窗的預設位置與大小');
 }
 function titleFor(w){return w.app==='chat'?(buddies.find(b=>b.id===w.arg)?.name||'聊天')+' - YIQI Talk':w.app==='notepad'?(w.arg||'個人筆記.txt')+' - 記事本':apps[w.app]?.[1]||w.app}
@@ -706,7 +736,7 @@ case 'calculator':return `<div class="window-main"><div class="calc"><div class=
 case 'paint':return `<div class="paint-container"><div class="paint-tools"><label>畫筆顏色 <input type="color" id="paint-color" value="#2b60c0"></label><label>粗細 <input type="range" id="paint-size" min="1" max="24" value="4"></label><button class="secondary" data-action="paintClear">清除</button><button class="primary" data-action="paintSave">儲存圖片</button></div><div class="paint-area"><canvas id="paint-canvas" aria-label="繪圖畫布"></canvas></div></div>`;
 case 'player':return `<div class="player-center"><div id="player-disc" class="player-disc"></div><div><strong style="font-size:19px">🎵 懷舊音樂播放器</strong><p class="small">三首節奏與音色不同的原創電子旋律，非商業歌曲</p></div><select id="player-track" aria-label="選擇曲目"><option value="0">01 · 午後藍天</option><option value="1">02 · 像素漫遊</option><option value="2">03 · 夜色星光</option></select><div class="top-note" style="width:100%;text-align:center"><div id="player-track-style">輕快草原 · 三角波</div><div id="player-status" class="small">尚未播放</div></div><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button class="secondary" data-action="prevTrack">⏮ 上一首</button><button class="primary" data-action="toggleMusic" id="player-toggle">▶ 播放</button><button class="secondary" data-action="nextTrack">下一首 ⏭</button></div></div>`;
 case 'browser':return `<div class="toolbar"><span>🌐</span><input id="fake-url" style="flex:1" value="yiqi://welcome" aria-label="模擬網址"><button data-action="browse">前往</button></div><div class="browser-page"><h2>歡迎使用億柒瀏覽器</h2><p>這是一個懷舊網頁瀏覽器模擬視窗，可以使用下面的書籤。</p><p><button class="secondary" data-action="fakeHome">🏠 首頁</button> <button class="secondary" data-action="fakeHelp">📖 使用說明</button></p><p id="browser-output" class="top-note">提示：輸入真實 https:// 網址並按「前往」，會使用新分頁開啟，不會在模擬視窗載入。</p></div>`;
-case 'about':return `<div class="window-main"><div class="app-card"><h3>✨ 億柒懷舊系統／YIQI Talk</h3><p><b>YIQI Retro Desktop · 版本 v0.3.0</b></p><p>獨立開發的 Windows XP 風格純網頁模擬系統，包含開機、登入、桌面、關機、重新啟動、待命、模擬聊天與小工具。</p><p>不是真正的 Windows，也不是 Microsoft 官方產品。YIQI Talk 內的好友與聊天皆為虛擬角色，無法和真實使用者通訊。</p><p>網站不需要帳號或伺服器。所有模擬檔案、聊天紀錄與多數設定每次開機會自動恢復預設；只有是否允許跳過開機動畫的開關會保留。</p></div><div class="top-note">製作原則：不採用 Windows 原版圖像、商標圖樣或受版權保護的音效。</div></div>`;
+case 'about':return `<div class="window-main"><div class="app-card"><h3>✨ 億柒懷舊系統／YIQI Talk</h3><p><b>YIQI Retro Desktop · 版本 v0.3.1</b></p><p>獨立開發的 Windows XP 風格純網頁模擬系統，包含開機、登入、桌面、關機、重新啟動、待命、模擬聊天與小工具。</p><p>不是真正的 Windows，也不是 Microsoft 官方產品。YIQI Talk 內的好友與聊天皆為虛擬角色，無法和真實使用者通訊。</p><p>網站不需要帳號或伺服器。所有模擬檔案、聊天紀錄與多數設定每次開機會自動恢復預設；只有是否允許跳過開機動畫的開關會保留。</p></div><div class="top-note">製作原則：不採用 Windows 原版圖像、商標圖樣或受版權保護的音效。</div></div>`;
 default:return `<div class="window-main">此程式尚未提供。</div>`}}
 function renderExplorer(w){if(w.app==='bin')return `<div class="toolbar"><b>🗑️ 資源回收筒</b><button data-action="emptyBin" ${!bin.length?'disabled':''}>清空資源回收筒</button></div><div class="explorer-grid">${bin.length?bin.map((f,i)=>`<div class="file-tile"><span class="file-symbol">📄</span>${safe(f.name)}<div class="file-actions"><button data-restore="${i}">還原</button></div></div>`).join(''):'<p class="small">資源回收筒是空的。</p>'}</div><div class="window-status">這裡僅管理模擬檔案。</div>`;
 const docs=w.app==='documents'||w.arg==='docs';const title=docs?'我的文件':'我的電腦';return `<div class="toolbar"><button data-action="goComputer">🖥️ 我的電腦</button><button data-action="goDocuments">📁 我的文件</button>${docs?'<button data-action="newNote">✚ 新增文字文件</button>':''}</div><div class="window-status">📍 ${title}</div><div class="explorer-grid">${docs?files.map((f,i)=>`<div class="file-tile"><button class="file-tile" style="min-height:auto" data-file="${safe(f.name)}"><span class="file-symbol">📄</span>${safe(f.name)}</button><div class="file-actions"><button data-delete="${safe(f.name)}">刪除</button></div></div>`).join('')||'<p class="small">這裡沒有檔案。</p>':`<button class="file-tile" data-open="documents"><span class="file-symbol">📁</span>我的文件</button><button class="file-tile" data-open="bin"><span class="file-symbol">🗑️</span>資源回收筒</button><button class="file-tile" data-action="fakeDrive"><span class="file-symbol">💽</span>本機磁碟 (C:)</button><button class="file-tile" data-action="fakeDrive"><span class="file-symbol">💿</span>光碟機 (D:)</button>`}</div><div class="window-status">模擬檔案系統 · 不會讀取裝置真實磁碟</div>`}
