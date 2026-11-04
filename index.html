@@ -208,6 +208,8 @@ html,body{background:#071a36!important;overscroll-behavior:none}
 .dialog-inner{min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .dialog-cover{padding:8px}
 
+/* v0.3.2: Reflow shortcuts on viewport rotation; user-placed positions remain
+   memorized for return to the original orientation. No new functionality. */
 /* v0.3.1: Keep maximized / arranged / reset windows within the currently visible
    horizontal desktop slice on narrow screens. No additional applications. */
 /* v0.2.6: existing notepad unsaved-draft confirmation; no additional apps */
@@ -389,8 +391,24 @@ function bindDesktopHorizontalScroll(){
  desktopScroll.addEventListener('scroll',()=>{sync(desktopScroll,taskbarWrap);syncMaximizedWindowsToDesktopScroll()},{passive:true});
  taskbarWrap.addEventListener('scroll',()=>sync(taskbarWrap,desktopScroll),{passive:true});
 }
-// Keep existing windows visible after portrait/landscape switches.
+// Reflow desktop shortcuts when rotating between portrait and landscape.
+// Keep user-defined positions in memory; temporarily clamp only their display
+// positions if the new viewport would put them beneath the taskbar.
+function fitDesktopIconsToViewport(){
+ const sc=$('#desktop-scroll');if(!sc)return;
+ document.querySelectorAll('.desktop-icon[data-shortcut]').forEach(icon=>{
+  const id=icon.dataset.shortcut,index=desktopShortcuts.findIndex(a=>a[0]===id);
+  if(index<0)return;
+  const saved=shortcutPosition(id,index);
+  const maxX=Math.max(8,($('#desktop-workspace')?.clientWidth||sc.clientWidth)-icon.offsetWidth-8);
+  const maxY=Math.max(6,sc.clientHeight-icon.offsetHeight-6);
+  icon.style.left=Math.max(0,Math.min(saved.x,maxX))+'px';
+  icon.style.top=Math.max(6,Math.min(saved.y,maxY))+'px';
+ });
+}
+// Keep existing windows and shortcuts visible after portrait/landscape switches.
 function fitExistingWindowsToViewport(){
+ fitDesktopIconsToViewport();
  if(state!=='desktop')return;
  const sc=$('#desktop-scroll'),ws=$('#desktop-workspace');if(!sc||!ws)return;
  const viewW=sc.clientWidth,viewH=sc.clientHeight;
@@ -736,7 +754,7 @@ case 'calculator':return `<div class="window-main"><div class="calc"><div class=
 case 'paint':return `<div class="paint-container"><div class="paint-tools"><label>畫筆顏色 <input type="color" id="paint-color" value="#2b60c0"></label><label>粗細 <input type="range" id="paint-size" min="1" max="24" value="4"></label><button class="secondary" data-action="paintClear">清除</button><button class="primary" data-action="paintSave">儲存圖片</button></div><div class="paint-area"><canvas id="paint-canvas" aria-label="繪圖畫布"></canvas></div></div>`;
 case 'player':return `<div class="player-center"><div id="player-disc" class="player-disc"></div><div><strong style="font-size:19px">🎵 懷舊音樂播放器</strong><p class="small">三首節奏與音色不同的原創電子旋律，非商業歌曲</p></div><select id="player-track" aria-label="選擇曲目"><option value="0">01 · 午後藍天</option><option value="1">02 · 像素漫遊</option><option value="2">03 · 夜色星光</option></select><div class="top-note" style="width:100%;text-align:center"><div id="player-track-style">輕快草原 · 三角波</div><div id="player-status" class="small">尚未播放</div></div><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button class="secondary" data-action="prevTrack">⏮ 上一首</button><button class="primary" data-action="toggleMusic" id="player-toggle">▶ 播放</button><button class="secondary" data-action="nextTrack">下一首 ⏭</button></div></div>`;
 case 'browser':return `<div class="toolbar"><span>🌐</span><input id="fake-url" style="flex:1" value="yiqi://welcome" aria-label="模擬網址"><button data-action="browse">前往</button></div><div class="browser-page"><h2>歡迎使用億柒瀏覽器</h2><p>這是一個懷舊網頁瀏覽器模擬視窗，可以使用下面的書籤。</p><p><button class="secondary" data-action="fakeHome">🏠 首頁</button> <button class="secondary" data-action="fakeHelp">📖 使用說明</button></p><p id="browser-output" class="top-note">提示：輸入真實 https:// 網址並按「前往」，會使用新分頁開啟，不會在模擬視窗載入。</p></div>`;
-case 'about':return `<div class="window-main"><div class="app-card"><h3>✨ 億柒懷舊系統／YIQI Talk</h3><p><b>YIQI Retro Desktop · 版本 v0.3.1</b></p><p>獨立開發的 Windows XP 風格純網頁模擬系統，包含開機、登入、桌面、關機、重新啟動、待命、模擬聊天與小工具。</p><p>不是真正的 Windows，也不是 Microsoft 官方產品。YIQI Talk 內的好友與聊天皆為虛擬角色，無法和真實使用者通訊。</p><p>網站不需要帳號或伺服器。所有模擬檔案、聊天紀錄與多數設定每次開機會自動恢復預設；只有是否允許跳過開機動畫的開關會保留。</p></div><div class="top-note">製作原則：不採用 Windows 原版圖像、商標圖樣或受版權保護的音效。</div></div>`;
+case 'about':return `<div class="window-main"><div class="app-card"><h3>✨ 億柒懷舊系統／YIQI Talk</h3><p><b>YIQI Retro Desktop · 版本 v0.3.2</b></p><p>獨立開發的 Windows XP 風格純網頁模擬系統，包含開機、登入、桌面、關機、重新啟動、待命、模擬聊天與小工具。</p><p>不是真正的 Windows，也不是 Microsoft 官方產品。YIQI Talk 內的好友與聊天皆為虛擬角色，無法和真實使用者通訊。</p><p>網站不需要帳號或伺服器。所有模擬檔案、聊天紀錄與多數設定每次開機會自動恢復預設；只有是否允許跳過開機動畫的開關會保留。</p></div><div class="top-note">製作原則：不採用 Windows 原版圖像、商標圖樣或受版權保護的音效。</div></div>`;
 default:return `<div class="window-main">此程式尚未提供。</div>`}}
 function renderExplorer(w){if(w.app==='bin')return `<div class="toolbar"><b>🗑️ 資源回收筒</b><button data-action="emptyBin" ${!bin.length?'disabled':''}>清空資源回收筒</button></div><div class="explorer-grid">${bin.length?bin.map((f,i)=>`<div class="file-tile"><span class="file-symbol">📄</span>${safe(f.name)}<div class="file-actions"><button data-restore="${i}">還原</button></div></div>`).join(''):'<p class="small">資源回收筒是空的。</p>'}</div><div class="window-status">這裡僅管理模擬檔案。</div>`;
 const docs=w.app==='documents'||w.arg==='docs';const title=docs?'我的文件':'我的電腦';return `<div class="toolbar"><button data-action="goComputer">🖥️ 我的電腦</button><button data-action="goDocuments">📁 我的文件</button>${docs?'<button data-action="newNote">✚ 新增文字文件</button>':''}</div><div class="window-status">📍 ${title}</div><div class="explorer-grid">${docs?files.map((f,i)=>`<div class="file-tile"><button class="file-tile" style="min-height:auto" data-file="${safe(f.name)}"><span class="file-symbol">📄</span>${safe(f.name)}</button><div class="file-actions"><button data-delete="${safe(f.name)}">刪除</button></div></div>`).join('')||'<p class="small">這裡沒有檔案。</p>':`<button class="file-tile" data-open="documents"><span class="file-symbol">📁</span>我的文件</button><button class="file-tile" data-open="bin"><span class="file-symbol">🗑️</span>資源回收筒</button><button class="file-tile" data-action="fakeDrive"><span class="file-symbol">💽</span>本機磁碟 (C:)</button><button class="file-tile" data-action="fakeDrive"><span class="file-symbol">💿</span>光碟機 (D:)</button>`}</div><div class="window-status">模擬檔案系統 · 不會讀取裝置真實磁碟</div>`}
@@ -893,7 +911,9 @@ app.addEventListener('pointerdown',e=>{
  if(state!=='desktop')return;
  const icon=e.target.closest('[data-shortcut]');if(!icon||e.button!==0)return;
  const ws=$('#desktop-workspace');if(!ws)return;
- const id=icon.dataset.shortcut,index=desktopShortcuts.findIndex(a=>a[0]===id),pos=shortcutPosition(id,index),sx=e.clientX,sy=e.clientY;
+ // Begin dragging from the currently visible location, not an offscreen
+ // portrait position that was temporarily clamped after rotation.
+ const id=icon.dataset.shortcut,pos={x:parseFloat(icon.style.left)||0,y:parseFloat(icon.style.top)||0},sx=e.clientX,sy=e.clientY;
  let holding=false,moved=false,cancelled=false;
  const timer=setTimeout(()=>{if(cancelled)return;holding=true;icon.classList.add('moving');try{icon.setPointerCapture(e.pointerId)}catch{}},220);
  function move(ev){
