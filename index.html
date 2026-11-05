@@ -297,7 +297,7 @@ html,body{background:#071a36!important;overscroll-behavior:none}
 @media(max-height:420px){.yt-watch-page .youtube-stage{min-height:0!important}}
 
 
-/* v0.6.8：獨立億柒搜尋欄、清楚的外部連結及原創系統錯誤提示 */
+/* v0.6.9：獨立億柒搜尋欄、清楚的外部連結及原創系統錯誤提示 */
 .yiqi-browser{display:flex;flex-direction:column;min-height:100%;background:#edf2fc;color:#233e66}
 .yiqi-browser .browser-address-form{display:flex;align-items:center;gap:6px;padding:8px 10px;border-bottom:1px solid #b9cbe5;background:#e4ecfa;flex-wrap:wrap}
 .yiqi-browser .browser-address-form input{flex:1;min-width:130px;background:white;color:#243f61;border:1px solid #819ec7;border-radius:4px;padding:8px 9px;font-size:13px}
@@ -515,15 +515,43 @@ function uninstallSoftware(id){
 }
 const apps={messenger:[talkIcon(),'YIQI Talk'],explorer:['🖥️','我的電腦'],documents:['📁','我的文件'],bin:['🗑️','資源回收筒'],notepad:['📝','記事本'],paint:['🎨','小畫家'],calculator:['🧮','計算機'],player:['🎵','音樂播放器'],browser:['🌐','網際網路'],youtube:['▶️','YouTube'],software:['📦','軟體中心'],sticky:['🗒️','便利貼'],timer:['⏱️','倒數計時器'],todo:['✅','待辦清單'],imageViewer:['🖼️','圖片檢視器'],settings:['⚙️','控制台'],about:['✨','關於億柒 XP']};
 // 所有音訊均以 Web Audio 本機合成；非微軟原版音效或受保護歌曲。
+// iPhone Safari 在靜音模式或切換分頁後可能讓音訊無聲；播放音效時使用 media playback session，
+// 並在手指／滑鼠／鍵盤的真實操作中啟用共用 AudioContext。
+let audioGesturePrimed=false;
+function setPlaybackAudioSession(){
+ try{if(navigator.audioSession&&navigator.audioSession.type!=='playback')navigator.audioSession.type='playback'}catch(e){}
+}
 function getAudioContext(){
  try{
+  setPlaybackAudioSession();
   const Audio=window.AudioContext||window.webkitAudioContext;
   if(!Audio)return null;
-  audioCtx=audioCtx||new Audio();
-  if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});
+  if(!audioCtx||audioCtx.state==='closed'){
+   audioCtx=new Audio();audioGesturePrimed=false;
+  }
+  if(audioCtx.state==='suspended'||audioCtx.state==='interrupted'){
+   const pending=audioCtx.resume();
+   if(pending&&typeof pending.catch==='function')pending.catch(()=>{});
+  }
   return audioCtx;
  }catch{return null}
 }
+function unlockAudioFromGesture(){
+ const ctx=getAudioContext();if(!ctx||audioGesturePrimed)return;
+ try{
+  // 單一靜音樣本不會發出聲音，但可在 iOS 真實點擊時解鎖音訊輸出。
+  const source=ctx.createBufferSource();
+  source.buffer=ctx.createBuffer(1,1,ctx.sampleRate||44100);
+  source.connect(ctx.destination);source.start(0);
+  audioGesturePrimed=true;
+ }catch(e){}
+}
+document.addEventListener('pointerdown',unlockAudioFromGesture,{capture:true,passive:true});
+document.addEventListener('touchstart',unlockAudioFromGesture,{capture:true,passive:true});
+document.addEventListener('keydown',unlockAudioFromGesture,{capture:true});
+document.addEventListener('visibilitychange',()=>{
+ if(document.visibilityState==='visible'&&audioCtx&&audioCtx.state!=='running')audioGesturePrimed=false;
+});
 function canSound(channel){
  if(cfg.muted||cfg.volume<=0)return false;
  if(channel==='music')return !!cfg.musicSound;
@@ -542,18 +570,28 @@ function chirp(pitch=600,dur=.12,kind='sine',vol=.04,channel='system'){
 }
 // 億柒自製錯誤音：兩個短暫低音，非 Windows 原版音效。
 function playSystemErrorSound(){
- if(!canSound('system'))return;
+ if(!canSound('system'))return false;
  try{
-  const ctx=getAudioContext();if(!ctx)return;
-  [[330,0,.12],[246.94,.155,.19]].forEach(([hz,delay,duration])=>{
-   const o=ctx.createOscillator(),g=ctx.createGain(),t=ctx.currentTime+delay;
-   o.type='triangle';o.frequency.setValueAtTime(hz,t);
-   g.gain.setValueAtTime(.0001,t);
-   g.gain.linearRampToValueAtTime(Math.min(.055,.035*cfg.volume/65),t+.015);
-   g.gain.exponentialRampToValueAtTime(.0001,t+duration);
-   o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+duration+.01);
-  });
- }catch(e){}
+  const ctx=getAudioContext();if(!ctx)return false;
+  const play=()=>{
+   try{[[330,0,.16],[246.94,.19,.23]].forEach(([hz,delay,duration])=>{
+    const o=ctx.createOscillator(),g=ctx.createGain(),t=ctx.currentTime+delay;
+    o.type='triangle';o.frequency.setValueAtTime(hz,t);
+    g.gain.setValueAtTime(.0001,t);
+    g.gain.linearRampToValueAtTime(Math.min(.12,.075*cfg.volume/65),t+.02);
+    g.gain.exponentialRampToValueAtTime(.0001,t+duration);
+    o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+duration+.015);
+   })}catch(e){}
+  };
+  if(ctx.state==='running'){play();return true}
+  // 首次觸控時 Safari 可能先回報 suspended/interrupted；等解鎖後才排程聲音。
+  const pending=ctx.resume();
+  if(pending&&typeof pending.then==='function')pending.then(()=>{
+   if(ctx.state==='running'&&state==='desktop')play();
+  }).catch(()=>{});
+  else if(ctx.state==='running')play();
+  return true;
+ }catch(e){return false}
 }
 function closeSystemError(){const slot=$('#system-error-slot');if(slot)slot.innerHTML=''}
 function systemError(title,detail){
@@ -857,12 +895,12 @@ function renderVolumePanel(){
  <div class="volume-actions"><label><input type="checkbox" id="volume-mute" ${cfg.muted?'checked':''}> 靜音</label><button type="button" data-global="voltest">▶ 試聽</button></div>
  <div class="volume-sounds">
  <label><input type="checkbox" data-sound-toggle="musicSound" ${cfg.musicSound?'checked':''}> 🎵 播放器音樂</label>
- <label><input type="checkbox" data-sound-toggle="sound" ${cfg.sound?'checked':''}> 🔔 一般提示音</label>
+ <div class="volume-sound-row"><label><input type="checkbox" data-sound-toggle="sound" ${cfg.sound?'checked':''}> 🔔 一般／錯誤提示音</label><button type="button" data-global="testerror">試聽</button></div>
  <div class="volume-sound-row"><label><input type="checkbox" data-sound-toggle="chatSound" ${cfg.chatSound?'checked':''}> 🗨️ 即時通來訊音效</label><button type="button" data-global="testtalkmessage">試聽</button></div>
  <div class="volume-sound-row"><label><input type="checkbox" data-sound-toggle="startupSound" ${cfg.startupSound?'checked':''}> 🌅 開機音效</label><button type="button" data-global="teststartup">試聽</button></div>
  <div class="volume-sound-row"><label><input type="checkbox" data-sound-toggle="shutdownSound" ${cfg.shutdownSound?'checked':''}> 🌙 關機音效</label><button type="button" data-global="testshutdown">試聽</button></div>
  </div>
- <small>即時通、開機及關機都有獨立原創音效，可分別開關。音量僅影響此網站，不控制 iPhone 音量；重新開機會還原預設。</small>
+ <small>提示音為自製音效。若 iPhone 仍無聲，請點「一般／錯誤提示音」旁的試聽，檢查系統音量與靜音模式；切回 Safari 後可再試。此音量不控制 iPhone 音量。</small>
  </section>`;
 }
 function clockTick(){const el=$('#clock');if(el)el.textContent=new Intl.DateTimeFormat('zh-TW',{hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date())}
@@ -1212,7 +1250,7 @@ case 'todo':return `<div class="window-main software-utility"><h3>✅ 待辦清�
 case 'timer':return `<div class="window-main software-utility"><h3>⏱️ 倒數計時器</h3><div class="software-timer-display" data-utility-timer-display>${timerText(softwareRemaining())}</div><p class="small" data-utility-timer-status>${softwareState.timer.endAt!==null?'倒數中':softwareRemaining()===0?'時間已到':'已暫停／待開始'}</p><label class="software-timer-choose">倒數時間 <select data-utility-timer-minutes aria-label="倒數分鐘數">${[1,3,5,10,15,30].map(minutes=>`<option value="${minutes}" ${softwareState.timer.duration===minutes*60?'selected':''}>${minutes} 分鐘</option>`).join('')}</select></label><div class="software-timer-buttons"><button type="button" class="primary" data-utility-timer="start">▶ 開始／繼續</button><button type="button" class="secondary" data-utility-timer="pause">⏸ 暫停</button><button type="button" class="secondary" data-utility-timer="reset">↶ 重設</button></div><div class="top-note">實際以時間差計算倒數；重新開機後恢復預設。計時提示需保持網頁開啟，iPhone 背景執行可能受系統限制。</div></div>`;
 case 'youtube':return youtubeHtml(w);
 case 'browser':return `<div class="yiqi-browser"><form class="browser-address-form" data-browser-address-form><label for="fake-url">🌐 網址</label><input id="fake-url" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" value="yiqi://welcome" aria-label="輸入網址"><button type="submit">前往</button></form><div class="browser-page"><h2>歡迎使用億柒瀏覽器</h2><p class="small">輸入關鍵字可以真正使用 Google 搜尋；網站會由手機或電腦的瀏覽器另開分頁。</p><form class="browser-search-form" data-browser-search-form><input type="search" name="q" placeholder="搜尋網頁，例如：高雄天氣" maxlength="200" aria-label="搜尋網頁"><button type="submit">🔎 搜尋</button></form><div class="browser-favorites"><button class="secondary" type="button" data-action="fakeHome">🏠 首頁</button><button class="secondary" type="button" data-action="fakeHelp">📖 使用說明</button><button class="secondary" type="button" data-action="testBrowserError">🔈 試聽錯誤音效</button></div><div id="browser-output" class="browser-info" role="status">這是 YIQI XP 的網頁版瀏覽器。支援網頁搜尋與開啟 http/https 網址；不支援在模擬視窗內直接安裝 Windows 軟體。</div></div></div>`;
-case 'about':return `<div class="window-main"><div class="app-card"><h3>✨ 億柒懷舊系統／YIQI Talk</h3><p><b>YIQI Retro Desktop · 版本 v0.6.8</b></p><p>獨立開發的 Windows XP 風格純網頁模擬系統，包含開機、登入、桌面、關機、重新啟動、待命、模擬聊天、小工具，以及 YouTube 官方嵌入式播放器、YIQI XP 專屬桌布與可實際操作的內建軟體中心。</p><p>不是真正的 Windows，也不是 Microsoft 官方產品。YIQI Talk 內的好友與聊天皆為虛擬角色，無法和真實使用者通訊。</p><p>網站不需要帳號或伺服器。個人資料夾、已儲存文件和安裝的軟體會在模擬重新開機後保留；桌布、聊天和暫時設定則會還原。重要資料請自行匯出備份。</p></div><div class="top-note">製作原則：不採用 Windows 原版圖像、商標圖樣或受版權保護的音效。</div></div>`;
+case 'about':return `<div class="window-main"><div class="app-card"><h3>✨ 億柒懷舊系統／YIQI Talk</h3><p><b>YIQI Retro Desktop · 版本 v0.6.9</b></p><p>獨立開發的 Windows XP 風格純網頁模擬系統，包含開機、登入、桌面、關機、重新啟動、待命、模擬聊天、小工具，以及 YouTube 官方嵌入式播放器、YIQI XP 專屬桌布與可實際操作的內建軟體中心。</p><p>不是真正的 Windows，也不是 Microsoft 官方產品。YIQI Talk 內的好友與聊天皆為虛擬角色，無法和真實使用者通訊。</p><p>網站不需要帳號或伺服器。個人資料夾、已儲存文件和安裝的軟體會在模擬重新開機後保留；桌布、聊天和暫時設定則會還原。重要資料請自行匯出備份。</p></div><div class="top-note">製作原則：不採用 Windows 原版圖像、商標圖樣或受版權保護的音效。</div></div>`;
 default:return `<div class="window-main">此程式尚未提供。</div>`}}
 // 個人模擬磁碟與資料夾（與關機重設的暫存狀態分離）。
 function fsId(f){return f.id||f.name}
@@ -1586,7 +1624,7 @@ app.addEventListener('click',e=>{
   else if(mode==='reset'){t.remaining=t.duration;t.endAt=null;t.doneNotified=false}
   tickSoftwareTimer();return;
  }
- const global=e.target.closest('[data-global]');if(global){const g=global.dataset.global;if(g==='closesystemerror')closeSystemError();else if(g==='poweron')boot();else if(g==='skipboot')showWelcome();else if(g==='login')login();else if(g==='wake'){const overlay=$('#standby-overlay');if(overlay){overlay.remove();state='desktop';const rotated=standbyViewport&&(standbyViewport.width!==innerWidth||standbyViewport.height!==innerHeight);standbyViewport=null;if(rotated)fitExistingWindowsToViewport();lastDesktopViewportWidth=innerWidth;syncMaximizedWindowsToDesktopScroll();}else renderDesktop();resumeSoftwareAfterStandby();resumeDeferredTalkReplies();}else if(g==='start'){volumeOpen=false;networkOpen=false;windowToolsOpen=false;renderWindowTools();renderVolumePanel();renderNetworkPanel();showStart=!showStart;renderStart();chirp(770,.04)}else if(g==='volume'){volumeOpen=!volumeOpen;networkOpen=false;windowToolsOpen=false;renderWindowTools();renderNetworkPanel();showStart=false;renderStart();renderVolumePanel()}else if(g==='network'){networkOpen=!networkOpen;volumeOpen=false;windowToolsOpen=false;showStart=false;renderStart();renderVolumePanel();renderWindowTools();renderNetworkPanel()}else if(g==='networkclose'){networkOpen=false;renderNetworkPanel()}else if(g==='windowtools'){windowToolsOpen=!windowToolsOpen;volumeOpen=false;networkOpen=false;showStart=false;renderStart();renderVolumePanel();renderNetworkPanel();renderWindowTools()}else if(g==='arrangecascade'||g==='arrangetile'||g==='showdesktop'||g==='restorewindows'||g==='resetwindows'){windowToolsOpen=false;renderWindowTools();if(g==='arrangecascade')arrangeWindows('cascade');else if(g==='arrangetile')arrangeWindows('tile');else if(g==='showdesktop')showDesktopWindows();else if(g==='restorewindows')restoreDesktopWindows();else resetDesktopWindowSizes()}else if(g==='voltest'){playPowerSound('startup',true)}else if(g==='teststartup'){playPowerSound('startup',true)}else if(g==='testshutdown'){playPowerSound('shutdown',true)}else if(g==='testtalkmessage'){playTalkMessageSound(true)}else if(g==='powerdialog'){showStart=false;renderStart();powerWarningMode=null;powerDialog=true;renderDialog()}else if(g==='noteclosecancel'){noteClosePendingId=null;renderDialog()}
+ const global=e.target.closest('[data-global]');if(global){const g=global.dataset.global;if(g==='closesystemerror')closeSystemError();else if(g==='poweron')boot();else if(g==='skipboot')showWelcome();else if(g==='login')login();else if(g==='wake'){const overlay=$('#standby-overlay');if(overlay){overlay.remove();state='desktop';const rotated=standbyViewport&&(standbyViewport.width!==innerWidth||standbyViewport.height!==innerHeight);standbyViewport=null;if(rotated)fitExistingWindowsToViewport();lastDesktopViewportWidth=innerWidth;syncMaximizedWindowsToDesktopScroll();}else renderDesktop();resumeSoftwareAfterStandby();resumeDeferredTalkReplies();}else if(g==='start'){volumeOpen=false;networkOpen=false;windowToolsOpen=false;renderWindowTools();renderVolumePanel();renderNetworkPanel();showStart=!showStart;renderStart();chirp(770,.04)}else if(g==='volume'){volumeOpen=!volumeOpen;networkOpen=false;windowToolsOpen=false;renderWindowTools();renderNetworkPanel();showStart=false;renderStart();renderVolumePanel()}else if(g==='network'){networkOpen=!networkOpen;volumeOpen=false;windowToolsOpen=false;showStart=false;renderStart();renderVolumePanel();renderWindowTools();renderNetworkPanel()}else if(g==='networkclose'){networkOpen=false;renderNetworkPanel()}else if(g==='windowtools'){windowToolsOpen=!windowToolsOpen;volumeOpen=false;networkOpen=false;showStart=false;renderStart();renderVolumePanel();renderNetworkPanel();renderWindowTools()}else if(g==='arrangecascade'||g==='arrangetile'||g==='showdesktop'||g==='restorewindows'||g==='resetwindows'){windowToolsOpen=false;renderWindowTools();if(g==='arrangecascade')arrangeWindows('cascade');else if(g==='arrangetile')arrangeWindows('tile');else if(g==='showdesktop')showDesktopWindows();else if(g==='restorewindows')restoreDesktopWindows();else resetDesktopWindowSizes()}else if(g==='voltest'){playPowerSound('startup',true)}else if(g==='testerror'){if(!canSound('system'))toast('請先開啟一般提示音、取消靜音並調高音量');else if(!playSystemErrorSound())toast('瀏覽器無法啟用音效，請確認 Safari 設定')}else if(g==='teststartup'){playPowerSound('startup',true)}else if(g==='testshutdown'){playPowerSound('shutdown',true)}else if(g==='testtalkmessage'){playTalkMessageSound(true)}else if(g==='powerdialog'){showStart=false;renderStart();powerWarningMode=null;powerDialog=true;renderDialog()}else if(g==='noteclosecancel'){noteClosePendingId=null;renderDialog()}
  else if(g==='noteclosesave'||g==='noteclosediscard'){
   const id=noteClosePendingId,w=wins.find(w=>w.id===id);
   if(g==='noteclosesave'&&w&&!saveNoteDraft(w))return;
