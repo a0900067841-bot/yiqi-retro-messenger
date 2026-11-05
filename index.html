@@ -1473,7 +1473,7 @@ case 'todo':return `<div class="window-main software-utility"><h3>✅ 待辦清�
 case 'timer':return `<div class="window-main software-utility"><h3>⏱️ 倒數計時器</h3><div class="software-timer-display" data-utility-timer-display>${timerText(softwareRemaining())}</div><p class="small" data-utility-timer-status>${softwareState.timer.endAt!==null?'倒數中':softwareRemaining()===0?'時間已到':'已暫停／待開始'}</p><label class="software-timer-choose">倒數時間 <select data-utility-timer-minutes aria-label="倒數分鐘數">${[1,3,5,10,15,30].map(minutes=>`<option value="${minutes}" ${softwareState.timer.duration===minutes*60?'selected':''}>${minutes} 分鐘</option>`).join('')}</select></label><div class="software-timer-buttons"><button type="button" class="primary" data-utility-timer="start">▶ 開始／繼續</button><button type="button" class="secondary" data-utility-timer="pause">⏸ 暫停</button><button type="button" class="secondary" data-utility-timer="reset">↶ 重設</button></div><div class="top-note">實際以時間差計算倒數；重新開機後恢復預設。計時提示需保持網頁開啟，iPhone 背景執行可能受系統限制。</div></div>`;
 case 'youtube':return youtubeHtml(w);
 case 'browser':return browserAppHtml();
-case 'about':return `<div class="window-main"><div class="app-card"><h3>✨ 億柒懷舊系統／YIQI Talk</h3><p><b>YIQI Retro Desktop · 版本 v0.7.3</b></p><p>獨立開發的 Windows XP 風格純網頁模擬系統，包含開機、登入、桌面、關機、重新啟動、待命、模擬聊天、小工具，以及 YouTube 官方嵌入式播放器、YIQI XP 專屬桌布與可實際操作的內建軟體中心。</p><p>不是真正的 Windows，也不是 Microsoft 官方產品。YIQI Talk 內的好友與聊天皆為虛擬角色，無法和真實使用者通訊。</p><p>網站不需要帳號或伺服器。個人資料夾、已儲存文件和安裝的軟體會在模擬重新開機後保留；桌布、聊天和暫時設定則會還原。重要資料請自行匯出備份。</p></div><div class="top-note">製作原則：不採用 Windows 原版圖像、商標圖樣或受版權保護的音效。</div></div>`;
+case 'about':return `<div class="window-main"><div class="app-card"><h3>✨ 億柒懷舊系統／YIQI Talk</h3><p><b>YIQI Retro Desktop · 版本 v0.7.4</b></p><p>獨立開發的 Windows XP 風格純網頁模擬系統，包含開機、登入、桌面、關機、重新啟動、待命、模擬聊天、小工具，以及 YouTube 官方嵌入式播放器、YIQI XP 專屬桌布與可實際操作的內建軟體中心。</p><p>不是真正的 Windows，也不是 Microsoft 官方產品。YIQI Talk 內的好友與聊天皆為虛擬角色，無法和真實使用者通訊。</p><p>網站不需要帳號或伺服器。個人資料夾、已儲存文件和安裝的軟體會在模擬重新開機後保留；桌布、聊天和暫時設定則會還原。重要資料請自行匯出備份。</p></div><div class="top-note">製作原則：不採用 Windows 原版圖像、商標圖樣或受版權保護的音效。</div></div>`;
 default:return `<div class="window-main">此程式尚未提供。</div>`}}
 // 個人模擬磁碟與資料夾（與關機重設的暫存狀態分離）。
 function fsId(f){return f.id||f.name}
@@ -1583,6 +1583,83 @@ function commitMove(type,id,to){
  }else return;
  if(!savePersonalData()){folders=previousFolders;files=previousFiles;shortcutFolders=previousShortcuts;personalData={version:1,folders,files,bin,installed:[...installedSoftware],shortcutFolders};toast('儲存失敗，移動未生效');return}refreshPersonalUI();toast('已移動到 '+folderLabel(to));
 }
+// v0.7.4｜匯入個人備份前進行深層檢查；不可信或損壞的備份不得覆蓋現有資料。
+function validImportPersonalData(item){
+ if(!validPersonalData(item))return false;
+ if(item.folders.length<2||item.folders.length>250||item.files.length>500||item.bin.length>500||item.installed.length>softwareCatalog.length)return false;
+ const record=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
+ const nameOK=x=>typeof x==='string'&&x.trim().length>0&&x.length<=120;
+ const idOK=x=>typeof x==='string'&&x.length>0&&x.length<=120&&!['__proto__','constructor','prototype'].includes(x);
+ const folderIds=new Set(['root','desktop']), folderNames=new Set(), byId=new Map();
+ for(const f of item.folders){
+  if(!record(f)||!idOK(f.id)||!nameOK(f.name)||!idOK(f.parentId)||folderIds.has(f.id))return false;
+  if(f.id==='docs'||f.id==='programs'){
+   if(f.parentId!=='root'||f.system!==true||f.name!==(f.id==='docs'?'我的文件':'我的軟體'))return false;
+  }else if(f.system)return false;
+  const unique=f.parentId+'\u0000'+f.name;
+  if(folderNames.has(unique))return false;
+  folderNames.add(unique);folderIds.add(f.id);byId.set(f.id,f);
+ }
+ if(!byId.has('docs')||!byId.has('programs'))return false;
+ for(const f of item.folders){
+  let p=f.parentId,seen=new Set([f.id]);
+  while(p!=='root'&&p!=='desktop'){
+   if(!byId.has(p)||seen.has(p))return false;
+   seen.add(p);p=byId.get(p).parentId;
+  }
+ }
+ const validFile=(f,folderMustExist)=>{
+  if(!record(f)||!idOK(f.id)||!nameOK(f.name)||typeof f.content!=='string'||f.content.length>6000000)return false;
+  if(f.kind!==undefined&&f.kind!=='text'&&f.kind!=='image')return false;
+  if(f.kind==='image'&&(typeof f.data!=='string'||!/^data:image\/(?:png|jpe?g|webp);base64,/i.test(f.data)))return false;
+  if(typeof f.folderId!=='string'||!idOK(f.folderId))return false;
+  return !folderMustExist||folderIds.has(f.folderId);
+ };
+ const fileNames=new Set(),fileIds=new Set();
+ for(const f of item.files){
+  if(!validFile(f,true)||fileNames.has(f.name)||fileIds.has(f.id))return false;
+  fileNames.add(f.name);fileIds.add(f.id);
+ }
+ const softwareIds=new Set(softwareCatalog.map(s=>s.id)),installedSet=new Set();
+ for(const id of item.installed){
+  if(!softwareIds.has(id)||installedSet.has(id))return false;
+  installedSet.add(id);
+ }
+ if(!record(item.shortcutFolders))return false;
+ for(const [id,folderId] of Object.entries(item.shortcutFolders)){
+  if(!installedSet.has(id)||!folderIds.has(folderId))return false;
+ }
+ for(const entry of item.bin){
+  if(!record(entry)||!record(entry.item))return false;
+  if(entry.type==='file'){
+   // 原上層資料夾刪除後，回收筒中的檔案仍可待使用者指定替代位置。
+   if(!validFile(entry.item,false))return false;
+  }else if(entry.type==='folder'){
+   const p=entry.item;
+   if(!Array.isArray(p.folders)||!p.folders.length||!Array.isArray(p.files)||!record(p.shortcuts||{}))return false;
+   if(p.folders.length>250||p.files.length>500)return false;
+   const recoveredIds=new Set(),recoveredNames=new Set();
+   for(const f of p.folders){
+    if(!record(f)||!idOK(f.id)||!idOK(f.parentId)||!nameOK(f.name)||recoveredIds.has(f.id)||f.system)return false;
+    recoveredIds.add(f.id);
+    const key=f.parentId+'\u0000'+f.name;if(recoveredNames.has(key))return false;
+    recoveredNames.add(key);
+   }
+   // 允許已被另外刪除的原上層資料夾，但備份本身不能構成循環。
+   const recoveredById=new Map(p.folders.map(f=>[f.id,f]));
+   for(const f of p.folders){
+    let parent=f.parentId,seen=new Set([f.id]);
+    while(recoveredById.has(parent)){
+     if(seen.has(parent))return false;
+     seen.add(parent);parent=recoveredById.get(parent).parentId;
+    }
+   }
+   for(const f of p.files)if(!validFile(f,false)||!recoveredIds.has(f.folderId))return false;
+   for(const [id,folderId] of Object.entries(p.shortcuts||{}))if(!softwareIds.has(id)||!recoveredIds.has(folderId))return false;
+  }else return false;
+ }
+ return true;
+}
 function exportPersonalBackup(){
  const data={kind:'YIQI-XP-PERSONAL-BACKUP',exportedAt:new Date().toISOString(),data:{version:1,folders,files,bin,installed:[...installedSoftware],shortcutFolders}};
  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);
@@ -1592,7 +1669,7 @@ function exportPersonalBackup(){
 async function importPersonalBackup(file){
  if(!file||file.size>4000000)return toast('備份檔太大（上限 4 MB）');
  try{
-  const value=JSON.parse(await file.text());if(value?.kind!=='YIQI-XP-PERSONAL-BACKUP'||!validPersonalData(value.data))return toast('不是有效的 YIQI XP 個人資料備份');
+  const value=JSON.parse(await file.text());if(value?.kind!=='YIQI-XP-PERSONAL-BACKUP'||!validImportPersonalData(value.data))return toast('備份檔結構不完整或內容異常，已拒絕匯入；原有資料未更動');
   const item=value.data;
   if(item.folders.length>250||item.files.length>500||item.installed.length>softwareCatalog.length)return toast('備份資料數量超出限制');
   if(!confirm('匯入將覆蓋目前所有個人資料夾、已儲存文件和軟體安裝紀錄。請確認已先備份現有資料。\n\n確定匯入？'))return;
