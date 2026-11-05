@@ -318,6 +318,85 @@ html,body{background:#071a36!important;overscroll-behavior:none}
 .yiqi-system-error-actions{display:flex;justify-content:flex-end;padding:8px 13px 14px}
 .yiqi-system-error-actions button{padding:6px 24px;background:linear-gradient(white,#d8e8fd);border:1px solid #7999c8;border-radius:5px;color:#1e497c}
 @media(max-width:420px){.yiqi-browser .browser-search-form input{min-width:100%}.yiqi-browser .browser-search-form button{width:100%}}
+
+/* v0.7.0：YIQI 首頁懷舊入口站。自製配色與文案、非 Yahoo! 官方內容。 */
+.yiqi-browser{height:100%;min-height:0}
+.yiqi-browser .browser-page{padding:0;container-type:inline-size;background:#fff;color:#262d3b;overscroll-behavior:contain}
+.portal-browser-toolbar{display:flex;flex-wrap:nowrap;gap:3px;padding:5px 7px;background:linear-gradient(#fefefe,#d4e2f4);border-bottom:1px solid #90aacf;overflow-x:auto;scrollbar-width:none;flex-shrink:0}
+.portal-browser-toolbar::-webkit-scrollbar{display:none}
+.portal-browser-toolbar button{flex:none;min-height:29px;min-width:30px;border:1px solid #9eb5d5;border-radius:3px;color:#1f4174;background:linear-gradient(#fff,#e0e8f4);font-size:12px;padding:4px 7px}
+.portal-browser-toolbar button:disabled{opacity:.46}
+.yiqi-browser .browser-address-form{flex-shrink:0;padding:5px 8px;flex-wrap:nowrap}
+.yiqi-browser .browser-address-form input{min-width:0;padding:6px 7px;font-size:12px}
+.yiqi-browser .browser-address-form button{padding:6px 9px}
+.yiqi-browser .portal-browser-status{border:0;border-top:1px solid #c2cde2;border-radius:0;background:#f4f5fb;padding:4px 9px;font-size:11px;line-height:1.3;flex:none;max-height:46px;overflow:auto}
+.yiqi-portal{font-family:Arial,'Microsoft JhengHei','PingFang TC',sans-serif;font-size:12px;background:#fff;color:#343843;padding:7px;line-height:1.48}
+.yiqi-portal button{font-family:inherit}
+.portal-minibar{background:#f4f6fb;border:1px solid #d5dceb;padding:4px 7px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;color:#5b657b;font-size:10px}
+.yiqi-portal .portal-link{border:0;background:transparent;padding:2px 1px;color:#1b51a0;font-size:inherit;text-align:left;text-decoration:none;cursor:pointer;line-height:1.42;box-shadow:none;min-width:0}
+.yiqi-portal .portal-link:hover,.yiqi-portal .portal-link:focus-visible{color:#6e328d;text-decoration:underline;background:#e9edf9}
+.portal-masthead{display:grid;grid-template-columns:minmax(140px,31%) minmax(0,1fr);align-items:center;gap:10px;padding:12px 8px 9px}
+.portal-logo{font:bold 31px Georgia,serif;letter-spacing:-2px;color:#65428a;white-space:nowrap;text-shadow:1px 1px #e6d8f2}
+.portal-logo span{font:bold 20px 'Microsoft JhengHei','PingFang TC',sans-serif;color:#a04773;letter-spacing:0}
+.portal-tagline{font-size:10px;color:#697388;line-height:1.4}
+.portal-search-area{min-width:0}.portal-search-label{font-weight:bold;color:#5b6a94;font-size:11px}
+.yiqi-portal .portal-main-search{margin:3px 0 4px;display:flex;flex-wrap:nowrap;gap:4px}
+.yiqi-portal .portal-main-search input{padding:8px;border-radius:1px;border:1px solid #879db5;min-width:0;font-size:13px}
+.yiqi-portal .portal-main-search button{width:auto;border-radius:1px;white-space:nowrap;background:linear-gradient(#ffedb1,#f4c35c);color:#744c06;border-color:#b69448;font-weight:bold;padding:6px 9px}
+.portal-hotlinks{font-size:10px;color:#7c808a}.portal-hotlinks .portal-link{margin-right:8px}
+.portal-tabs{border-top:2px solid #a2bddb;border-bottom:2px solid #a0b9dc;background:linear-gradient(#fff,#dfe9f6);padding:4px;display:flex;gap:3px;flex-wrap:wrap}
+.portal-tabs .portal-link{padding:3px 8px;color:#365f94;font-weight:700;border-right:1px solid #b2c6dd}
+.portal-grid{display:grid;grid-template-columns:minmax(110px,20%) minmax(0,1fr) minmax(130px,24%);gap:7px;padding-top:7px;align-items:start}
+.portal-left,.portal-center,.portal-right{min-width:0;display:grid;align-content:start;gap:7px}
+.portal-panel{border:1px solid #c8d3e1;background:#fff;min-width:0}
+.yiqi-portal .portal-panel h3{padding:5px 7px;margin:0;background:linear-gradient(#f5f9fd,#d4e2f2);border-bottom:1px solid #b7cbe2;font-size:12px;color:#365786;letter-spacing:0}
+.portal-panel-purple h3{background:linear-gradient(#faf6fc,#eadbf4);color:#754a90;border-color:#d2badf}
+.portal-panel-gold h3{background:linear-gradient(#fff7e4,#f6e0a4);color:#846028;border-color:#e8ce89}
+.portal-panel-light h3{background:linear-gradient(#fdfdfd,#ebf0f7);color:#4f6786}
+.portal-panel-content{padding:7px;font-size:11px}
+.portal-category-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:5px;row-gap:1px}
+.portal-short-list{display:grid;grid-template-columns:1fr;row-gap:3px}
+.portal-feature{display:grid;grid-template-columns:minmax(92px,37%) minmax(0,1fr);gap:9px}
+.portal-feature-art{min-height:105px;background:radial-gradient(circle at 40% 34%,#679ddd,#194985 70%);display:flex;align-items:center;justify-content:center;flex-direction:column;border:1px solid #b7c9da;color:#fff}
+.portal-feature-art span{font-size:36px}.portal-feature-art small{font-size:13px;font-weight:bold;letter-spacing:1px}
+.portal-feature-text{min-width:0}.portal-feature-text strong{color:#24569d;font-size:14px}.portal-feature-text p{font-size:11px;margin:5px 0;color:#515766}
+.portal-news-links{border-top:1px dotted #b0c0d3;margin-top:7px;padding-top:5px;display:grid;gap:2px}
+.portal-news-links .portal-link:before{content:'▪';color:#7e8b9c;margin-right:4px}
+.portal-promo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.portal-promo{border:1px solid #d8e0ed;background:#f9fbff;min-width:0;text-align:center;padding:7px 3px}
+.portal-promo>span{font-size:24px;display:block}.portal-promo b{display:block;color:#445b89;font-size:11px}.portal-promo p{font-size:10px;color:#6b7585;margin:3px 0}
+.portal-service-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+.portal-service-grid .portal-link{background:#f9f6fb;border:1px solid #e1d8ea;padding:5px 3px;text-align:center;word-break:break-all}
+.portal-recommend{display:grid;gap:5px}.portal-recommend>div{padding-bottom:3px;border-bottom:1px dotted #d1dce8}
+.portal-announcement{font-weight:bold;color:#9c6020;margin:0 0 6px}.portal-muted{font-size:10px;color:#687589;margin:3px 0}
+.portal-disclaimer{margin:4px 0;padding:7px;border:1px dashed #cbd6e3;background:#f7f9fd;color:#687183;font-size:10px}
+.portal-footer{text-align:center;color:#7b8392;border-top:1px solid #d7e0e9;margin-top:10px;padding:8px 4px;font-size:10px}
+.portal-help{padding:16px;line-height:1.8;font-size:13px;color:#32486c;max-width:750px;margin:0 auto}
+.portal-help h2{font-size:18px}.portal-help button{margin-top:12px;padding:8px 13px}
+@container (max-width:500px){
+ .yiqi-portal{padding:5px;font-size:11px}
+ .portal-masthead{display:block;padding:8px 5px}
+ .portal-logo{font-size:28px}.portal-logo span{font-size:19px}
+ .portal-search-area{margin-top:6px}
+ .portal-grid{grid-template-columns:minmax(104px,34%) minmax(0,1fr);gap:5px}
+ .portal-right{grid-column:1/-1;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+ .portal-category-grid{grid-template-columns:1fr}
+ .portal-feature{grid-template-columns:1fr}
+ .portal-feature-art{min-height:65px;flex-direction:row;gap:8px}.portal-feature-art span{font-size:23px}
+ .portal-feature-text strong{font-size:12px}
+ .portal-panel-content{padding:5px;font-size:11px}
+ .portal-promo-grid{grid-template-columns:1fr}
+ .portal-promo{display:grid;grid-template-columns:25px 1fr;align-items:center;text-align:left;column-gap:5px;padding:5px 3px}
+ .portal-promo>span{grid-row:span 3;font-size:20px}.portal-promo p{margin:0}
+ .portal-tabs .portal-link{padding:2px 4px}
+ .portal-minibar{font-size:9px}
+}
+@container (max-width:340px){
+ .portal-grid{grid-template-columns:minmax(92px,35%) minmax(0,1fr)}
+ .portal-main-search button{font-size:11px!important;padding:6px!important}
+ .portal-right{grid-template-columns:1fr}
+ .portal-service-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
 </style>
 </head>
 <body><main id="app" aria-label="億柒懷舊模擬電腦"></main>
@@ -614,9 +693,7 @@ function browserHandle(raw,mode='address'){
   browserOpenExternal('https://www.google.com/search?q='+encodeURIComponent(input),'Google 搜尋：'+input);return;
  }
  if(input==='yiqi://welcome'||input==='yiqi://help'){
-  const output=$('#browser-output');
-  if(output)output.textContent=input.endsWith('help')?'使用說明：桌面圖示連按兩下開啟；可搜尋網頁，外部網站會在 Safari 新分頁開啟。':'歡迎回到億柒首頁。';
-  return;
+  browserShowPage(input==='yiqi://help'?'help':'home');return;
  }
  // 網頁模式不能執行本機檔案、腳本協定或 Windows 應用程式。
  if((/^[a-z][a-z\d+.-]*:/i.test(input)&&!/^https?:\/\//i.test(input))||/\\|^[a-z]:[\\/]/i.test(input)||/\.exe(?:\?.*)?$/i.test(input)){
@@ -634,6 +711,71 @@ function browserHandle(raw,mode='address'){
   if(url.username||url.password){systemError('不支援的網址','請移除網址內的帳號或密碼資訊再試。');return}
   browserOpenExternal(url.href,url.hostname);
  }catch(e){systemError('網址格式錯誤','網址無法辨識，請確認輸入內容或改用搜尋功能。')}
+}
+// v0.7.0｜YIQI 首頁：自製的 2000 年代繁中入口網站。站內消息為展示，外部搜尋使用正式網站。
+let browserPages=['home'],browserPageIndex=0;
+function browserPageName(){return browserPages[browserPageIndex]||'home'}
+function portalButton(label,kind,value){
+ const att=kind==='app'?'data-portal-app':kind==='query'?'data-portal-search':'data-portal-demo';
+ return `<button type="button" class="portal-link" ${att}="${safe(value)}">${safe(label)}</button>`;
+}
+function portalHeaderDate(){
+ try{return new Intl.DateTimeFormat('zh-TW',{month:'long',day:'numeric',weekday:'long'}).format(new Date())}catch{return '繁體中文版'}
+}
+function portalPanel(title,content,theme='blue'){
+ return `<section class="portal-panel portal-panel-${theme}"><h3>${title}</h3><div class="portal-panel-content">${content}</div></section>`;
+}
+function portalHomepageHtml(){
+ const categories=[
+  ['新聞','query','台灣新聞'],['股市理財','query','台灣股市'],['運動天地','query','運動新聞'],
+  ['科技新知','query','3C科技'],['遊戲世界','demo','懷舊遊戲'],['音樂天地','app','player'],
+  ['電影娛樂','query','電影資訊'],['購物中心','query','台灣網路購物'],['拍賣天地','demo','拍賣天地'],
+  ['生活資訊','query','生活資訊'],['旅遊休閒','query','台灣旅遊'],['汽車機車','query','汽車機車'],
+  ['房屋資訊','query','台灣房地產'],['工作求職','query','工作職缺'],['星座運勢','demo','星座運勢'],
+  ['知識百科','query','百科知識'],['電子信箱','demo','電子信箱'],['即時通訊','app','messenger']
+ ];
+ const tools=[['📩 信箱','demo','電子信箱'],['💬 即時通','app','messenger'],['▶ 影音','app','youtube'],['📁 文件','app','documents'],['📦 軟體','app','software'],['🎵 音樂','app','player']];
+ return `<section class="yiqi-portal" aria-label="YIQI 首頁｜懷舊入口站">
+  <div class="portal-minibar"><span>YIQI 首頁　·　${portalHeaderDate()}</span><span>繁體中文　｜　經典版　｜　${portalButton('加入我的最愛','demo','我的最愛')}</span></div>
+  <div class="portal-masthead"><div class="portal-brand"><div class="portal-logo">YIQI <span>首頁</span></div><div class="portal-tagline">億柒懷舊入口站 · 經典網路回憶，從這裡重新開始</div></div>
+   <div class="portal-search-area"><div class="portal-search-label">網頁搜尋</div><form class="browser-search-form portal-main-search" data-browser-search-form><input name="q" type="search" maxlength="200" placeholder="想找什麼？輸入關鍵字開始搜尋！" aria-label="YIQI 首頁網頁搜尋" required><button type="submit">🔎 網頁搜尋</button></form><div class="portal-hotlinks">熱門：${portalButton('新聞','query','台灣新聞')}${portalButton('遊戲','demo','懷舊遊戲')}${portalButton('音樂','app','player')}${portalButton('即時通','app','messenger')}${portalButton('YouTube','app','youtube')}</div></div>
+  </div>
+  <nav class="portal-tabs" aria-label="入口網站分類">${portalButton('首頁','app','browser')}${portalButton('新聞','query','台灣新聞')}${portalButton('生活','query','生活資訊')}${portalButton('科技','query','科技資訊')}${portalButton('購物','query','網路購物')}${portalButton('娛樂','query','娛樂新聞')}${portalButton('音樂','app','player')}${portalButton('即時通','app','messenger')}</nav>
+  <div class="portal-grid"><aside class="portal-left">
+    ${portalPanel('熱門分類',`<div class="portal-category-grid">${categories.map(c=>portalButton(...c)).join('')}</div>`)}
+    ${portalPanel('站內導覽',`<div class="portal-short-list">${portalButton('🖥️ 我的電腦','app','explorer')}${portalButton('📝 記事本','app','notepad')}${portalButton('🎨 小畫家','app','paint')}${portalButton('⚙️ 控制台','app','settings')}</div>`,'light')}
+   </aside><main class="portal-center">
+    ${portalPanel('今日焦點 · 本站消息',`<div class="portal-feature"><div class="portal-feature-art"><span>🖥️</span><small>YIQI XP</small></div><div class="portal-feature-text"><strong>YIQI XP 經典電腦再登場！</strong><p>還記得開啟電腦、整理文件、和好友聊天的日子嗎？重新感受熟悉的懷舊桌面。</p>${portalButton('了解 YIQI XP  ›','app','about')}</div></div><div class="portal-news-links">${portalButton('YIQI Talk 懷舊聊天視窗','app','messenger')}${portalButton('我的電腦支援整理個人文件','app','explorer')}${portalButton('軟體中心可安裝實用小工具','app','software')}${portalButton('YIQI XP 專屬草原桌布','app','settings')}</div>`)}
+    ${portalPanel('經典娛樂與生活',`<div class="portal-promo-grid"><div class="portal-promo"><span>🎵</span><b>音樂天地</b><p>重溫熟悉的播放感</p>${portalButton('開啟播放器','app','player')}</div><div class="portal-promo"><span>💬</span><b>懷舊即時通</b><p>好友上線了嗎？</p>${portalButton('開啟 YIQI Talk','app','messenger')}</div><div class="portal-promo"><span>▶️</span><b>影音專區</b><p>觀賞真正的影片</p>${portalButton('開啟 YouTube','app','youtube')}</div></div>`,'light')}
+    <div class="portal-disclaimer">※ 本頁焦點、推薦與公告為 YIQI XP 自製展示內容，非即時新聞或廣告。外部搜尋結果會在瀏覽器新分頁開啟。</div>
+   </main><aside class="portal-right">
+    ${portalPanel('快速服務',`<div class="portal-service-grid">${tools.map(([text,kind,value])=>portalButton(text,kind,value)).join('')}</div>`,'purple')}
+    ${portalPanel('精選推薦',`<div class="portal-recommend"><div>🗒️ ${portalButton('便利貼、待辦工具','app','software')}</div><div>🎨 ${portalButton('懷舊小畫家','app','paint')}</div><div>📁 ${portalButton('整理我的文件','app','documents')}</div></div>`,'light')}
+    ${portalPanel('本站公告',`<p class="portal-announcement">歡迎來到 YIQI 懷舊入口站！</p><p class="portal-muted">搜尋與部分連結可使用；其餘展示入口將提供說明。</p>`,'gold')}
+    ${portalPanel('今日小資訊',`<p class="portal-muted">${portalHeaderDate()} · 經典版</p><p>${portalButton('🔎 查詢今日天氣','query','台灣今日天氣')}</p><p class="portal-muted">天氣資料請以搜尋結果為準。</p>`,'light')}
+   </aside></div>
+  <footer class="portal-footer">YIQI 首頁｜億柒懷舊入口站　·　非 Yahoo! 或 Microsoft 官方網站　·　部分服務為懷舊展示</footer>
+ </section>`;
+}
+function browserHelpHtml(){return `<section class="portal-help"><h2>📖 YIQI 懷舊瀏覽器使用說明</h2><p>在首頁輸入關鍵字，可以開啟 Google 搜尋結果；輸入 http/https 網址，也會在手機或電腦的瀏覽器中開啟。</p><p>首頁的「即時通、我的文件、軟體中心、YouTube、音樂播放器」會開啟 YIQI XP 現有程式；其他未開放項目會顯示說明。</p><p>外部網站不會直接顯示在這個模擬視窗中，也不支援執行 Windows .exe 程式。</p><button type="button" class="secondary" data-action="fakeHome">🏠 返回 YIQI 首頁</button></section>`}
+function browserContentHtml(){return browserPageName()==='help'?browserHelpHtml():portalHomepageHtml()}
+function browserAppHtml(){return `<div class="yiqi-browser"><div class="portal-browser-toolbar"><button type="button" data-browser-nav="back" title="上一頁" aria-label="上一頁" ${browserPageIndex<=0?'disabled':''}>◀</button><button type="button" data-browser-nav="forward" title="下一頁" aria-label="下一頁" ${browserPageIndex>=browserPages.length-1?'disabled':''}>▶</button><button type="button" data-browser-nav="reload" title="重新整理" aria-label="重新整理">↻</button><button type="button" data-action="fakeHome" title="YIQI 首頁">⌂ 首頁</button><button type="button" data-browser-nav="search" title="網頁搜尋">🔎 搜尋</button><button type="button" data-action="fakeHelp" title="使用說明">? 說明</button><button type="button" data-action="testBrowserError" title="試聽錯誤提示音">🔈</button></div><form class="browser-address-form" data-browser-address-form><label for="fake-url">🌐 網址</label><input id="fake-url" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" value="yiqi://${browserPageName()==='help'?'help':'welcome'}" aria-label="輸入網址"><button type="submit">前往</button></form><div class="browser-page">${browserContentHtml()}</div><div id="browser-output" class="browser-info portal-browser-status" role="status">YIQI 首頁已載入 · 搜尋與外部網站在瀏覽器新分頁開啟</div></div>`}
+function browserShowPage(page,record=true){
+ if(!['home','help'].includes(page))return;
+ if(record&&browserPageName()!==page){browserPages=browserPages.slice(0,browserPageIndex+1);browserPages.push(page);browserPageIndex=browserPages.length-1;}
+ const root=$('.yiqi-browser');if(!root)return;
+ const view=root.querySelector('.browser-page');if(view){view.innerHTML=browserContentHtml();view.scrollTop=0;}
+ const input=root.querySelector('#fake-url');if(input)input.value='yiqi://'+(page==='help'?'help':'welcome');
+ root.querySelectorAll('[data-browser-nav="back"]').forEach(b=>b.disabled=browserPageIndex<=0);
+ root.querySelectorAll('[data-browser-nav="forward"]').forEach(b=>b.disabled=browserPageIndex>=browserPages.length-1);
+ const status=root.querySelector('#browser-output');if(status)status.textContent=page==='help'?'使用說明已載入':'歡迎來到 YIQI 首頁｜懷舊入口站';
+}
+function browserNavMove(action){
+ if(action==='back'&&browserPageIndex>0)browserPageIndex--;
+ else if(action==='forward'&&browserPageIndex<browserPages.length-1)browserPageIndex++;
+ else if(action==='search'){if(browserPageName()!=='home')browserShowPage('home');$('.portal-main-search input')?.focus();return;}
+ else if(action==='reload'){browserShowPage(browserPageName(),false);return;}
+ browserShowPage(browserPageName(),false);
 }
 // 專屬 YIQI Talk 來訊雙音提示；獨立於一般系統音效，遵守主音量及靜音。
 function playTalkMessageSound(preview=false){
@@ -692,7 +834,7 @@ function restoreOnBoot(){
   desktopIconPositions={};lastDesktopTapId=null;lastDesktopTapAt=0;ignoredFriends=new Set();pendingInvites=[];alerts=[];simEventsStarted=false;
   ymSession={signedIn:false,account:'',remembered:'yiqi_guest',remember:true,auto:false,invisible:false,presence:'online',pending:false,theme:'aqua',seq:ymSession.seq+1};
   talkUnread={};talkTyping={};talkPendingReplies={};friendQuery='';deferredTalkReplies=[];
-  volumeOpen=false;
+  volumeOpen=false;browserPages=['home'];browserPageIndex=0;
   // 個人資料的資料夾、已儲存文件及已安裝軟體不因模擬重新開機而清除。
   personalData=load(PERSONAL_KEY,personalData);if(!validPersonalData(personalData))personalData=freshPersonalData();
   folders=personalData.folders;files=personalData.files;bin=personalData.bin;shortcutFolders=personalData.shortcutFolders;
@@ -1249,8 +1391,8 @@ case 'sticky':return `<div class="window-main software-utility"><h3>🗒️ 便�
 case 'todo':return `<div class="window-main software-utility"><h3>✅ 待辦清單</h3><form data-utility-task-form class="software-task-form"><input type="text" maxlength="120" value="${safe(softwareState.todoDraft)}" placeholder="輸入新的待辦事項" aria-label="新待辦事項" required><button class="primary" type="submit">新增</button></form><div class="software-task-list">${softwareState.tasks.length?softwareState.tasks.map((item,i)=>`<div class="software-task-row"><label><input type="checkbox" data-utility-task-check="${i}" ${item.done?'checked':''}><span class="${item.done?'software-task-done':''}">${safe(item.text)}</span></label><button type="button" class="secondary" data-utility-task-delete="${i}" aria-label="刪除${safe(item.text)}">刪除</button></div>`).join(''):'<div class="top-note">還沒有待辦事項，先新增第一項吧。</div>'}</div><p class="small">待辦事項只保留在本次模擬開機期間。</p></div>`;
 case 'timer':return `<div class="window-main software-utility"><h3>⏱️ 倒數計時器</h3><div class="software-timer-display" data-utility-timer-display>${timerText(softwareRemaining())}</div><p class="small" data-utility-timer-status>${softwareState.timer.endAt!==null?'倒數中':softwareRemaining()===0?'時間已到':'已暫停／待開始'}</p><label class="software-timer-choose">倒數時間 <select data-utility-timer-minutes aria-label="倒數分鐘數">${[1,3,5,10,15,30].map(minutes=>`<option value="${minutes}" ${softwareState.timer.duration===minutes*60?'selected':''}>${minutes} 分鐘</option>`).join('')}</select></label><div class="software-timer-buttons"><button type="button" class="primary" data-utility-timer="start">▶ 開始／繼續</button><button type="button" class="secondary" data-utility-timer="pause">⏸ 暫停</button><button type="button" class="secondary" data-utility-timer="reset">↶ 重設</button></div><div class="top-note">實際以時間差計算倒數；重新開機後恢復預設。計時提示需保持網頁開啟，iPhone 背景執行可能受系統限制。</div></div>`;
 case 'youtube':return youtubeHtml(w);
-case 'browser':return `<div class="yiqi-browser"><form class="browser-address-form" data-browser-address-form><label for="fake-url">🌐 網址</label><input id="fake-url" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" value="yiqi://welcome" aria-label="輸入網址"><button type="submit">前往</button></form><div class="browser-page"><h2>歡迎使用億柒瀏覽器</h2><p class="small">輸入關鍵字可以真正使用 Google 搜尋；網站會由手機或電腦的瀏覽器另開分頁。</p><form class="browser-search-form" data-browser-search-form><input type="search" name="q" placeholder="搜尋網頁，例如：高雄天氣" maxlength="200" aria-label="搜尋網頁"><button type="submit">🔎 搜尋</button></form><div class="browser-favorites"><button class="secondary" type="button" data-action="fakeHome">🏠 首頁</button><button class="secondary" type="button" data-action="fakeHelp">📖 使用說明</button><button class="secondary" type="button" data-action="testBrowserError">🔈 試聽錯誤音效</button></div><div id="browser-output" class="browser-info" role="status">這是 YIQI XP 的網頁版瀏覽器。支援網頁搜尋與開啟 http/https 網址；不支援在模擬視窗內直接安裝 Windows 軟體。</div></div></div>`;
-case 'about':return `<div class="window-main"><div class="app-card"><h3>✨ 億柒懷舊系統／YIQI Talk</h3><p><b>YIQI Retro Desktop · 版本 v0.6.9</b></p><p>獨立開發的 Windows XP 風格純網頁模擬系統，包含開機、登入、桌面、關機、重新啟動、待命、模擬聊天、小工具，以及 YouTube 官方嵌入式播放器、YIQI XP 專屬桌布與可實際操作的內建軟體中心。</p><p>不是真正的 Windows，也不是 Microsoft 官方產品。YIQI Talk 內的好友與聊天皆為虛擬角色，無法和真實使用者通訊。</p><p>網站不需要帳號或伺服器。個人資料夾、已儲存文件和安裝的軟體會在模擬重新開機後保留；桌布、聊天和暫時設定則會還原。重要資料請自行匯出備份。</p></div><div class="top-note">製作原則：不採用 Windows 原版圖像、商標圖樣或受版權保護的音效。</div></div>`;
+case 'browser':return browserAppHtml();
+case 'about':return `<div class="window-main"><div class="app-card"><h3>✨ 億柒懷舊系統／YIQI Talk</h3><p><b>YIQI Retro Desktop · 版本 v0.7.0</b></p><p>獨立開發的 Windows XP 風格純網頁模擬系統，包含開機、登入、桌面、關機、重新啟動、待命、模擬聊天、小工具，以及 YouTube 官方嵌入式播放器、YIQI XP 專屬桌布與可實際操作的內建軟體中心。</p><p>不是真正的 Windows，也不是 Microsoft 官方產品。YIQI Talk 內的好友與聊天皆為虛擬角色，無法和真實使用者通訊。</p><p>網站不需要帳號或伺服器。個人資料夾、已儲存文件和安裝的軟體會在模擬重新開機後保留；桌布、聊天和暫時設定則會還原。重要資料請自行匯出備份。</p></div><div class="top-note">製作原則：不採用 Windows 原版圖像、商標圖樣或受版權保護的音效。</div></div>`;
 default:return `<div class="window-main">此程式尚未提供。</div>`}}
 // 個人模擬磁碟與資料夾（與關機重設的暫存狀態分離）。
 function fsId(f){return f.id||f.name}
@@ -1593,6 +1735,10 @@ function selectMusicTrack(index){
 let calcState={display:'0',a:null,op:null,fresh:false};function calcPress(x){let s=calcState;if(x==='C'){calcState={display:'0',a:null,op:null,fresh:false};s=calcState}else if(x==='←'){s.display=s.display.length>1?s.display.slice(0,-1):'0'}else if(/[0-9]/.test(x)&&x.length===1){s.display=(s.fresh||s.display==='0')?x:s.display+x;s.fresh=false}else if(x==='.'){if(s.fresh){s.display='0';s.fresh=false}if(!s.display.includes('.'))s.display+='.'}else if(x==='±'){s.display=String(-Number(s.display))}else if(x==='%'){s.display=String(Number(s.display)/100)}else if(['+','−','×','÷'].includes(x)){if(s.a!==null&&s.op&&!s.fresh)calcPress('=');s.a=Number(s.display);s.op=x;s.fresh=true}else if(x==='='){if(s.a!==null&&s.op){const b=Number(s.display),res=({'+':()=>s.a+b,'−':()=>s.a-b,'×':()=>s.a*b,'÷':()=>b===0?NaN:s.a/b})[s.op]();s.display=Number.isFinite(res)?String(Number(res.toFixed(9))):'錯誤';s.a=null;s.op=null;s.fresh=true}}const el=$('#calc-display');if(el)el.textContent=s.display}
 function action(name,el){switch(name){case 'ytalkTheme':{const name=(el.dataset.themeName||'aqua').trim();if(!ytalkThemes[name])return;ymSession.theme=name;refreshTalkWindows();toast('已切換為 '+ytalkThemeName(name)+' 主題（重新開機恢復水藍）');break}case 'saveNote':{const w=wins.find(w=>w.id===el.closest('.window')?.id.slice(4));if(!w)return;const textarea=el.closest('.window')?.querySelector('[data-note-edit]');if(textarea)noteDrafts[noteFileName(w)]=textarea.value;if(saveNoteDraft(w))toast('已儲存：'+noteFileName(w)+'（重新開機保留）');break}case 'newNote':{const wanted=prompt('新文件名稱（不需要輸入副檔名）','我的筆記');if(wanted===null)return;let name=wanted.trim().replace(/[\\/:*?"<>|]/g,'').slice(0,40);if(!name){toast('請輸入有效的名稱');return}if(!name.endsWith('.txt'))name+='.txt';if(files.some(f=>f.name===name)){toast('已有相同名稱的文件');return}const hostId=el.closest('.window')?.id;const hostWin=wins.find(w=>hostId==='win-'+w.id);const parent=(hostWin&&(hostWin.app==='explorer'||hostWin.app==='documents'))?currentExplorerFolder(hostWin):'docs';files.push({id:newItemId(),name,content:'',folderId:folderExists(parent)?parent:'docs',kind:'text'});if(!savePersonalData()){files.pop();return}refreshFileWindows();openWin('notepad',name);break}case 'saveName':{const name=$('#username-input')?.value?.trim();if(!name)return toast('名稱不可空白');cfg.name=name.slice(0,22);saveSettings();refresh(wins.find(x=>x.app==='messenger'));toast('已暫時修改名稱（重新開機會還原）');break}case 'goComputer':openWin('explorer');break;case 'goDocuments':openWin('documents');break;case 'emptyBin':if(!bin.length)return;if(confirm('確定要永久清空模擬資源回收筒嗎？')){const previousBin=bin;bin=[];if(!savePersonalData()){bin=previousBin;personalData={version:1,folders,files,bin,installed:[...installedSoftware],shortcutFolders};toast('儲存失敗，資源回收筒尚未清空');break}refreshFileWindows();toast('已清空資源回收筒')}break;case 'fakeDrive':toast('這是模擬磁碟，沒有存取裝置真實 C 槽或 D 槽。');break;case 'emote':{const id=el.dataset.chatId;const inp=document.querySelector(`[data-chat-form="${id}"] input`);if(inp){inp.value+='😊';inp.focus()}break}case 'nudge':{const id='chat_'+el.dataset.chatId;const win=document.getElementById('win-'+id);win?.classList.remove('shake');void win?.offsetWidth;win?.classList.add('shake');chirp(780,.07);setTimeout(()=>chirp(1010,.16),110);toast('已發送模擬震動！');const session=epoch,seq=ymSession.seq,friend=el.dataset.chatId;setTimeout(()=>completeTalkReply(friend,'',session,seq,'nudge'),700);break}case 'clearChat':{const id=el.dataset.chatId;if(confirm('清除這個虛擬好友的本機模擬聊天紀錄？')){delete chats[id];store(KEYS.chat,chats);refresh(wins.find(x=>x.id==='chat_'+id))}break}case 'paintClear':{const c=$('#paint-canvas');if(c){const ctx=c.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,c.width,c.height)}break}case 'paintSave':{const c=$('#paint-canvas');if(!c)return;const a=document.createElement('a');a.href=c.toDataURL('image/png');a.download='億柒小畫家.png';a.click();toast('圖片已交由瀏覽器下載（手機可查看下載項目）');break}case 'toggleMusic':playMusic();break;case 'nextTrack':case 'prevTrack':selectMusicTrack(melodyTrack+(name==='nextTrack'?1:songs.length-1));break;case 'fakeHome':{const input=$('#fake-url');if(input)input.value='yiqi://welcome';browserHandle('yiqi://welcome');break}case 'fakeHelp':{const input=$('#fake-url');if(input)input.value='yiqi://help';browserHandle('yiqi://help');break}case 'browse':browserHandle($('#fake-url')?.value||'');break;case 'testBrowserError':systemError('無法執行此程式','YIQI XP 是網頁模擬系統，無法直接執行 Windows .exe 檔案。');break}}
 app.addEventListener('click',e=>{
+ const portalApp=e.target.closest('[data-portal-app]');if(portalApp){const appId=portalApp.dataset.portalApp;if(appId==='browser')browserShowPage('home');else if(Object.hasOwn(apps,appId))openWin(appId);return;}
+ const portalQuery=e.target.closest('[data-portal-search]');if(portalQuery){browserHandle(portalQuery.dataset.portalSearch,'search');return;}
+ const portalDemo=e.target.closest('[data-portal-demo]');if(portalDemo){systemError('懷舊服務展示',portalDemo.dataset.portalDemo+'：此項目目前是懷舊展示，尚未開放實際服務。');return;}
+ const browserNav=e.target.closest('[data-browser-nav]');if(browserNav){browserNavMove(browserNav.dataset.browserNav);return;}
  const newFolder=e.target.closest('[data-personal-new-folder]');if(newFolder){createFolder(newFolder.dataset.personalNewFolder);return}
  const nav=e.target.closest('[data-explorer-nav]');if(nav){
   const host=nav.closest('.window');const w=wins.find(x=>host&&host.id==='win-'+x.id);
