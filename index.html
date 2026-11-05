@@ -44,6 +44,7 @@ html,body{background:#071a36!important;overscroll-behavior:none}
 .desktop-workspace{position:relative;width:max(100%,var(--sim-desktop-width,760px));height:100%;min-height:100%}
 .desktop-icons{position:absolute;inset:0!important;display:block!important;max-height:none!important;pointer-events:none;overflow:visible}
 .desktop-icon{position:absolute!important;width:80px;min-height:76px;pointer-events:auto;touch-action:none;-webkit-user-select:none;user-select:none}
+.desktop-icon.selected{background:rgba(175,221,255,.32);border-color:#d7f0ffaf;box-shadow:inset 0 0 0 1px #71a8e0aa}
 .desktop-icon.moving{z-index:90;background:#c4e5ff70;border-color:#d7f0ff;box-shadow:0 2px 18px #0b2b537a}
 #windows{position:absolute;inset:0;pointer-events:none}
 #windows>.window{pointer-events:auto}
@@ -264,14 +265,14 @@ html,body{background:#071a36!important;overscroll-behavior:none}
 .personal-tile .file-symbol{font-size:32px}.personal-tile .file-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:4px}.personal-tile .file-actions button{font-size:11px;padding:5px 7px;border:1px solid #b3cce6;border-radius:5px;color:#285588;background:#fff;cursor:pointer}
 .personal-backup-bar{padding:9px;display:flex;flex-wrap:wrap;gap:7px;border-top:1px solid #d7e6f4;background:#eef5fc}.personal-move-dialog{background:#f4f8ff;color:#244461;border:2px solid #2f69b3;border-radius:10px;padding:17px;width:min(390px,calc(100vw - 30px));box-shadow:0 15px 50px #0007}.personal-move-dialog h3{margin:0 0 7px}.personal-move-dialog label{display:grid;gap:7px}.personal-move-dialog select{width:100%;max-width:100%;padding:10px;border:1px solid #86a7ca;border-radius:6px;font-size:14px}.personal-move-actions{margin-top:15px;display:flex;justify-content:flex-end;gap:8px}.personal-image-viewer{overflow:auto;min-height:0;flex:1;padding:12px;text-align:center;background:#eef5fc}.personal-image-viewer img{display:block;max-width:100%;max-height:70vh;object-fit:contain;margin:auto}
 
-/* v0.6.6：YIQI 三螢幕網路狀態圖示與網路面板 */
+/* v0.6.7：YIQI 三螢幕網路狀態圖示與網路面板 */
 .tray-network{display:inline-flex;align-items:center;justify-content:center;min-width:36px;height:35px;padding:0 3px;border:0;color:#fff;background:transparent;border-radius:4px;cursor:pointer;touch-action:manipulation}
 .tray-network:hover,.tray-network[aria-expanded="true"]{background:rgba(255,255,255,.2)}
 .yiqi-network-svg{width:30px;height:25px;display:block;filter:drop-shadow(0 1px 1px #184275)}
 .tray{gap:5px}.network-popover{position:absolute;z-index:9999;right:8px;bottom:calc(var(--task) + 9px);width:min(310px,calc(100vw - 16px));padding:12px 14px;background:linear-gradient(#fff,#e8f1ff);border:2px solid #3977bf;border-radius:8px;box-shadow:0 9px 30px #071b3c77;color:#18385b;font-size:13px;line-height:1.5}
 .network-popover strong{display:flex;align-items:center;gap:8px;font-size:14px}.network-popover p{margin:7px 0}.network-popover-actions{display:flex;justify-content:flex-end}.network-popover-actions button{border:1px solid #8bb0de;background:#fff;color:#234b7e;border-radius:4px;padding:5px 13px}
 .factory-maintenance{border-top:1px solid #c7d4e9;padding-top:12px;margin-top:12px}.factory-maintenance button{margin-top:6px}.personal-backup-bar{margin-top:10px;flex-wrap:wrap}
-/* v0.6.6：YouTube 懷舊觀看頁。沿用同一個官方嵌入式播放器。 */
+/* v0.6.7：YouTube 懷舊觀看頁。沿用同一個官方嵌入式播放器。 */
 .yt-watch-page{background:#fff;color:#17202d;gap:10px;padding:10px;overflow:auto}
 .yt-topline{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 2px 6px;border-bottom:1px solid #e6e8eb}
 .yt-brand{display:flex;align-items:center;gap:6px;font-size:17px;white-space:nowrap}.yt-brand strong{letter-spacing:-.6px;color:#1e2024}.yt-brand small{font-size:10px;color:#797e86;font-weight:400;margin-left:2px}
@@ -404,7 +405,7 @@ function normalizeExplorerWindows(){
 function refreshPersonalUI(){normalizeExplorerWindows();syncInstalledShortcuts();renderShortcutIcons();renderStart();refreshFileWindows();redrawSoftwareCenter()}
 
 let standbyViewport=null,state='off',epoch=0,activeId=null,wins=[],nextZ=20,showStart=false,powerDialog=false,powerWarningMode=null,noteClosePendingId=null,noteDrafts={},tipTimer=0,clockTimer=0,audioCtx=null,melodyTimer=null,melodyIndex=0,melodyTrack=0,paintStroke=false,volumeOpen=false,networkOpen=false,windowToolsOpen=false;
-let desktopIconPositions={},suppressIconClick=false,ignoredFriends=new Set(),pendingInvites=[],alerts=[],alertNumber=0,simEventsStarted=false;
+let desktopIconPositions={},suppressIconClick=false,lastDesktopTapId=null,lastDesktopTapAt=0,ignoredFriends=new Set(),pendingInvites=[],alerts=[],alertNumber=0,simEventsStarted=false;
 const defaultBuddies=[{id:'qi',name:'小柒',emoji:'🌟',status:'線上',intro:'歡迎來到億柒的懷舊世界！'},{id:'apple',name:'蘋果糖',emoji:'🍬',status:'線上',intro:'你還記得以前的 MSN 嗎？'},{id:'star',name:'星空',emoji:'🌙',status:'忙碌',intro:'今天也要開心喔～'},{id:'robot',name:'電腦小幫手',emoji:'💻',status:'線上',intro:'有問題可以問我！'}];
 let buddies=defaultBuddies.map(b=>({...b}));
 let buddyPresenceOverrides={};
@@ -571,7 +572,7 @@ function restoreOnBoot(){
   writeBootSkipPreference(keepSkip);
   cfg={...defaults,skip:keepSkip};
   buddies=defaultBuddies.map(b=>({...b}));buddyPresenceOverrides={};
-  desktopIconPositions={};ignoredFriends=new Set();pendingInvites=[];alerts=[];simEventsStarted=false;
+  desktopIconPositions={};lastDesktopTapId=null;lastDesktopTapAt=0;ignoredFriends=new Set();pendingInvites=[];alerts=[];simEventsStarted=false;
   ymSession={signedIn:false,account:'',remembered:'yiqi_guest',remember:true,auto:false,invisible:false,presence:'online',pending:false,theme:'aqua',seq:ymSession.seq+1};
   talkUnread={};talkTyping={};talkPendingReplies={};friendQuery='';deferredTalkReplies=[];
   volumeOpen=false;
@@ -606,7 +607,7 @@ let desktopShortcuts=baseDesktopShortcuts.slice();
 function syncInstalledShortcuts(){desktopShortcuts=[...baseDesktopShortcuts,...softwareCatalog.filter(x=>installedSoftware.has(x.id)&&!shortcutFolders[x.id]).map(x=>[x.id,x.name]),...folders.filter(x=>x.parentId==='desktop').map(x=>['folder:'+x.id,x.name])]}
 function renderShortcutIcons(){
  const el=document.querySelector('.desktop-icons');if(!el)return;
- el.innerHTML=desktopShortcuts.map(([id,name],index)=>{const pos=shortcutPosition(id,index);return `<button class="desktop-icon" data-open="${id}" data-shortcut="${id}" style="left:${pos.x}px;top:${pos.y}px" title="開啟${name}，長按可移動"><span class="icon-art">${apps[id]?.[0]||'📁'}</span><span>${safe(name)}</span></button>`}).join('');
+ el.innerHTML=desktopShortcuts.map(([id,name],index)=>{const pos=shortcutPosition(id,index);return `<button class="desktop-icon" data-open="${id}" data-shortcut="${id}" style="left:${pos.x}px;top:${pos.y}px" title="連按兩下開啟${name}，長按可移動"><span class="icon-art">${apps[id]?.[0]||'📁'}</span><span>${safe(name)}</span></button>`}).join('');
  fitDesktopIconsToViewport();
 }
 function shortcutPosition(id,index){
@@ -709,7 +710,7 @@ addEventListener('resize',()=>{
 
 function renderDesktop(){
  volumeOpen=false;networkOpen=false;windowToolsOpen=false;state='desktop';lastDesktopViewportWidth=innerWidth;
- const icons=desktopShortcuts.map(([id,n],i)=>{const pos=shortcutPosition(id,i);return `<button class="desktop-icon" data-open="${id}" data-shortcut="${id}" style="left:${pos.x}px;top:${pos.y}px" title="開啟${n}，長按可移動"><span class="icon-art">${apps[id]?.[0]||'📁'}</span><span>${safe(n)}</span></button>`}).join('');
+ const icons=desktopShortcuts.map(([id,n],i)=>{const pos=shortcutPosition(id,i);return `<button class="desktop-icon" data-open="${id}" data-shortcut="${id}" style="left:${pos.x}px;top:${pos.y}px" title="連按兩下開啟${n}，長按可移動"><span class="icon-art">${apps[id]?.[0]||'📁'}</span><span>${safe(n)}</span></button>`}).join('');
  setScreen(`<section id="desktop" class="desktop wallpaper-${cfg.wallpaper}"><div class="desktop-scroll" id="desktop-scroll"><div class="desktop-workspace" id="desktop-workspace"><div class="desktop-icons">${icons}</div><div id="windows"></div></div></div><div id="start-slot"></div><div class="taskbar-wrap" id="taskbar-wrap"><div class="taskbar-track"><footer class="taskbar"><button id="start-button" class="start-button" data-global="start"><span class="start-emblem">✦</span>開始</button><div id="task-buttons" class="task-buttons"></div><button type="button" class="window-tools-btn" data-global="windowtools" aria-label="視窗排列" aria-expanded="false" title="視窗排列／顯示桌面">▦</button><div class="tray"><button type="button" class="tray-network" data-global="network" title="網路連線狀態" aria-label="網路連線狀態" aria-expanded="false">${networkIcon()}</button><button type="button" class="tray-speaker" title="調整模擬系統音量" aria-label="調整模擬系統音量" aria-expanded="false" data-global="volume">🔊</button><span id="clock"></span></div></footer></div></div><div id="volume-slot"></div><div id="network-slot"></div><div id="window-tools-slot"></div><div id="notification-slot" class="xp-alerts" aria-live="polite"></div><div id="dialog-slot"></div><div id="toast-slot"></div></section>`);
  bindDesktopHorizontalScroll();clockTick();renderStart();wins.forEach(w=>mountWindow(w));renderTasks();if(!clockTimer)clockTimer=setInterval(clockTick,20000);renderVolumePanel();renderNetworkPanel();renderAlerts();renderWindowTools();
  if(ymSession.signedIn&&!simEventsStarted)scheduleSimEvents();
@@ -745,7 +746,7 @@ function ignoreInvite(id){pendingInvites=pendingInvites.filter(x=>x.id!==id);ale
 function ignoreFriend(id){const b=buddies.find(x=>x.id===id);if(!b)return;ignoredFriends.add(id);closeWin('chat_'+id);refresh(wins.find(w=>w.app==='messenger'));toast(`已略過 ${b.name}；本次開機可隨時恢復`)}
 function deleteFriend(id){const b=buddies.find(x=>x.id===id);if(!b)return;if(!confirm(`確定在本次開機刪除「${b.name}」嗎？重新開機會恢復預設好友。`))return;buddies=buddies.filter(x=>x.id!==id);ignoredFriends.delete(id);delete chats[id];closeWin('chat_'+id);refresh(wins.find(w=>w.app==='messenger'));toast(`已刪除 ${b.name}（重新開機會恢復）`)}
 // 三台小螢幕互相連線：YIQI 原創 SVG，不使用 Windows 官方圖示。
-function networkIcon(){return `<svg class="yiqi-network-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 42" width="34" height="28" aria-hidden="true" focusable="false"><g fill="none" stroke="#d9f3ff" stroke-width="2.6" stroke-linecap="round"><path d="M28 15v8M13 23h30M13 23v4M43 23v4"/></g><g fill="#e9f6ff" stroke="#265b86" stroke-width="1.8"><rect x="19" y="2" width="18" height="14" rx="2"/><rect x="2" y="25" width="19" height="13" rx="2"/><rect x="35" y="25" width="19" height="13" rx="2"/></g><g fill="#78c5f2"><rect x="22" y="5" width="12" height="8" rx="1"/><rect x="5" y="28" width="13" height="7" rx="1"/><rect x="38" y="28" width="13" height="7" rx="1"/></g><path d="M28 16v4M9 39h5M42 39h5" stroke="#f6fbff" stroke-width="2" stroke-linecap="round"/></svg>`}
+function networkIcon(){return `<svg class="yiqi-network-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 42" width="34" height="28" aria-hidden="true" focusable="false"><g fill="none" stroke="#d9f3ff" stroke-width="2.6" stroke-linecap="round"><path d="M28 15v8M13 23h30M13 23v4M43 23v4"/></g><g fill="#e9f6ff" stroke="#265b86" stroke-width="1.8"><rect x="19" y="2" width="18" height="14" rx="2"/><rect x="2" y="25" width="19" height="13" rx="2"/><rect x="35" y="25" width="19" height="13" rx="2"/></g><g fill="#78c5f2"><rect x="22" y="5" width="12" height="8" rx="1"/><rect x="5" y="28" width="13" height="7" rx="1"/><rect x="38" y="28" width="13" height="7" rx="1"/></g><path d="M28 16v4M9 39h5M42 39h5" stroke="#f6fbff" stroke-width="2" stroke-linecap="round"/>${navigator.onLine===false?'<g><circle cx="47" cy="34" r="9" fill="#fff" stroke="#b92a25" stroke-width="1.4"/><path d="M43 30l8 8M51 30l-8 8" stroke="#d71919" stroke-width="3.4" stroke-linecap="round"/></g>':''}</svg>`}
 function renderNetworkPanel(){
  const slot=$('#network-slot'),button=$('.tray-network');if(!slot)return;
  if(button)button.setAttribute('aria-expanded',String(networkOpen));
@@ -754,8 +755,18 @@ function renderNetworkPanel(){
  const status=online===false?'離線（瀏覽器回報）':online===true?'可能已連線（瀏覽器回報）':'狀態不明';
  slot.innerHTML=`<section class="network-popover" role="group" aria-label="網路連線狀態"><strong>${networkIcon()} 網路連線</strong><p><b>${status}</b></p><p>此處只顯示瀏覽器回報的連線狀態，無法讀取真正的路由器、IP 或即時網速。</p><div class="network-popover-actions"><button type="button" data-global="networkclose">關閉</button></div></section>`;
 }
-window.addEventListener('online',()=>{if(networkOpen)renderNetworkPanel()});
-window.addEventListener('offline',()=>{if(networkOpen)renderNetworkPanel()});
+function refreshNetworkTray(){
+ const button=$('.tray-network');
+ if(button){
+  button.innerHTML=networkIcon();
+  const offline=navigator.onLine===false;
+  button.title=offline?'網路離線（瀏覽器回報）':'網路狀態（瀏覽器回報）';
+  button.setAttribute('aria-label',button.title);
+ }
+ if(networkOpen)renderNetworkPanel();
+}
+window.addEventListener('online',refreshNetworkTray);
+window.addEventListener('offline',refreshNetworkTray);
 function renderVolumePanel(){
  const slot=$('#volume-slot');if(!slot)return;
  const button=$('.tray-speaker');if(button){button.textContent=cfg.muted||cfg.volume===0?'🔇':cfg.volume<40?'🔉':'🔊';button.setAttribute('aria-expanded',String(volumeOpen))}
@@ -811,7 +822,7 @@ function renderDialog(){
   slot.innerHTML=`<div class="dialog-cover"><div class="dialog shutdown-warning" role="dialog" aria-modal="true" aria-label="${operation}前提醒"><div class="dialog-title">⚠️ ${operation}前提醒</div><div class="dialog-inner"><strong class="shutdown-warning-title">還有 ${wins.length} 個程式視窗尚未關閉</strong><p class="shutdown-warning-desc">請先關閉這些視窗，或選擇仍要${operation}。</p><ul class="shutdown-warning-list">${list}${rest>0?`<li>另外還有 ${rest} 個視窗…</li>`:''}</ul><p class="shutdown-warning-note">${dirty.length?`⚠️ 有 ${dirty.length} 份記事本尚未儲存！繼續${operation}會捨棄未儲存的修改。`:'繼續會結束本次模擬工作階段。'}已最小化的視窗也包含在內；重新開機會保留已儲存個人文件與已安裝軟體。</p><div class="shutdown-warning-actions"><button type="button" class="primary" data-global="cancelshutdownwarning">返回桌面</button><button type="button" class="secondary" data-global="confirmshutdownwarning">仍要${operation}</button></div></div></div></div>`;
   return;
  }
- slot.innerHTML=`<div class="dialog-cover"><div class="dialog" role="dialog" aria-label="電腦關機選項"><div class="dialog-title">關閉電腦</div><div class="dialog-inner"><p>你想要電腦做什麼？</p><div class="dialog-options"><button class="dialog-choice" data-global="standby"><span>🌙</span>待命</button><button class="dialog-choice" data-global="shutdown"><span>🔴</span>關機</button><button class="dialog-choice" data-global="restart"><span>🔄</span>重新開機</button></div><div class="dialog-actions"><button class="secondary" data-global="canceldialog">取消</button></div></div></div></div>`}
+ slot.innerHTML=`<div class="dialog-cover"><div class="dialog" role="dialog" aria-label="電腦關機選項"><div class="dialog-title">關閉電腦</div><div class="dialog-inner"><p>你想要電腦做什麼？</p><div class="dialog-options"><button class="dialog-choice" data-global="standby"><span>🌙</span>待命</button><button class="dialog-choice" data-global="shutdown"><span class="yiqi-shutdown-icon" aria-hidden="true"><svg viewBox="0 0 48 48" width="48" height="48" xmlns="http://www.w3.org/2000/svg"><path d="M24 6v22M13 13a16 16 0 1 0 22 0" fill="none" stroke="#db4336" stroke-width="6" stroke-linecap="round"/><path d="M24 5v20M12 14a17 17 0 1 0 24 0" fill="none" stroke="#ffbdaf" stroke-width="1.4" stroke-linecap="round" opacity=".65"/></svg></span>關機</button><button class="dialog-choice" data-global="restart"><span>🔄</span>重新開機</button></div><div class="dialog-actions"><button class="secondary" data-global="canceldialog">取消</button></div></div></div></div>`}
 function renderTasks(){const slot=$('#task-buttons');if(!slot)return;const unread=Object.values(talkUnread).reduce((n,v)=>n+v,0);slot.innerHTML=wins.map(w=>`<button class="task-app ${activeId===w.id&&!w.minimized?'active':''}" data-task="${safe(w.id)}" title="${safe(w.title)}">${w.icon} ${safe(w.title)}${(w.app==='messenger'&&unread)||(w.app==='chat'&&talkUnread[w.arg])?`<span class="ytalk-task-unread">${Math.min(99,w.app==='messenger'?unread:talkUnread[w.arg])}${(w.app==='messenger'?unread:talkUnread[w.arg])>99?'+':''}</span>`:''}</button>`).join('')}
 
 function renderWindowTools(){
@@ -1122,7 +1133,7 @@ case 'todo':return `<div class="window-main software-utility"><h3>✅ 待辦清�
 case 'timer':return `<div class="window-main software-utility"><h3>⏱️ 倒數計時器</h3><div class="software-timer-display" data-utility-timer-display>${timerText(softwareRemaining())}</div><p class="small" data-utility-timer-status>${softwareState.timer.endAt!==null?'倒數中':softwareRemaining()===0?'時間已到':'已暫停／待開始'}</p><label class="software-timer-choose">倒數時間 <select data-utility-timer-minutes aria-label="倒數分鐘數">${[1,3,5,10,15,30].map(minutes=>`<option value="${minutes}" ${softwareState.timer.duration===minutes*60?'selected':''}>${minutes} 分鐘</option>`).join('')}</select></label><div class="software-timer-buttons"><button type="button" class="primary" data-utility-timer="start">▶ 開始／繼續</button><button type="button" class="secondary" data-utility-timer="pause">⏸ 暫停</button><button type="button" class="secondary" data-utility-timer="reset">↶ 重設</button></div><div class="top-note">實際以時間差計算倒數；重新開機後恢復預設。計時提示需保持網頁開啟，iPhone 背景執行可能受系統限制。</div></div>`;
 case 'youtube':return youtubeHtml(w);
 case 'browser':return `<div class="toolbar"><span>🌐</span><input id="fake-url" style="flex:1" value="yiqi://welcome" aria-label="模擬網址"><button data-action="browse">前往</button></div><div class="browser-page"><h2>歡迎使用億柒瀏覽器</h2><p>這是一個懷舊網頁瀏覽器模擬視窗，可以使用下面的書籤。</p><p><button class="secondary" data-action="fakeHome">🏠 首頁</button> <button class="secondary" data-action="fakeHelp">📖 使用說明</button></p><p id="browser-output" class="top-note">提示：輸入真實 https:// 網址並按「前往」，會使用新分頁開啟，不會在模擬視窗載入。</p></div>`;
-case 'about':return `<div class="window-main"><div class="app-card"><h3>✨ 億柒懷舊系統／YIQI Talk</h3><p><b>YIQI Retro Desktop · 版本 v0.6.6</b></p><p>獨立開發的 Windows XP 風格純網頁模擬系統，包含開機、登入、桌面、關機、重新啟動、待命、模擬聊天、小工具，以及 YouTube 官方嵌入式播放器、YIQI XP 專屬桌布與可實際操作的內建軟體中心。</p><p>不是真正的 Windows，也不是 Microsoft 官方產品。YIQI Talk 內的好友與聊天皆為虛擬角色，無法和真實使用者通訊。</p><p>網站不需要帳號或伺服器。個人資料夾、已儲存文件和安裝的軟體會在模擬重新開機後保留；桌布、聊天和暫時設定則會還原。重要資料請自行匯出備份。</p></div><div class="top-note">製作原則：不採用 Windows 原版圖像、商標圖樣或受版權保護的音效。</div></div>`;
+case 'about':return `<div class="window-main"><div class="app-card"><h3>✨ 億柒懷舊系統／YIQI Talk</h3><p><b>YIQI Retro Desktop · 版本 v0.6.7</b></p><p>獨立開發的 Windows XP 風格純網頁模擬系統，包含開機、登入、桌面、關機、重新啟動、待命、模擬聊天、小工具，以及 YouTube 官方嵌入式播放器、YIQI XP 專屬桌布與可實際操作的內建軟體中心。</p><p>不是真正的 Windows，也不是 Microsoft 官方產品。YIQI Talk 內的好友與聊天皆為虛擬角色，無法和真實使用者通訊。</p><p>網站不需要帳號或伺服器。個人資料夾、已儲存文件和安裝的軟體會在模擬重新開機後保留；桌布、聊天和暫時設定則會還原。重要資料請自行匯出備份。</p></div><div class="top-note">製作原則：不採用 Windows 原版圖像、商標圖樣或受版權保護的音效。</div></div>`;
 default:return `<div class="window-main">此程式尚未提供。</div>`}}
 // 個人模擬磁碟與資料夾（與關機重設的暫存狀態分離）。
 function fsId(f){return f.id||f.name}
@@ -1510,7 +1521,24 @@ const ignoreInviteBtn=e.target.closest('[data-invite-ignore]');if(ignoreInviteBt
 const ignoreBuddyBtn=e.target.closest('[data-friend-ignore]');if(ignoreBuddyBtn){ignoreFriend(ignoreBuddyBtn.dataset.friendIgnore);return}
 const delBuddyBtn=e.target.closest('[data-friend-delete]');if(delBuddyBtn){deleteFriend(delBuddyBtn.dataset.friendDelete);return}
 const restoreBuddyBtn=e.target.closest('[data-friend-restore]');if(restoreBuddyBtn){ignoredFriends.delete(restoreBuddyBtn.dataset.friendRestore);refresh(wins.find(w=>w.app==='messenger'));return}
-if(e.target.closest('[data-shortcut]')&&suppressIconClick){suppressIconClick=false;return}
+const desktopShortcut=e.target.closest('[data-shortcut]');
+if(desktopShortcut){
+ if(suppressIconClick){suppressIconClick=false;lastDesktopTapId=null;lastDesktopTapAt=0;return}
+ const id=desktopShortcut.dataset.shortcut;
+ const now=Date.now();
+ const isDouble=e.detail>=2||(id===lastDesktopTapId&&now-lastDesktopTapAt<650);
+ document.querySelectorAll('.desktop-icon.selected').forEach(el=>el.classList.remove('selected'));
+ desktopShortcut.classList.add('selected');
+ if(isDouble||e.detail===0){ // Keyboard Enter/Space remains accessible.
+  lastDesktopTapId=null;lastDesktopTapAt=0;
+  openWin(id);
+ }else{
+  lastDesktopTapId=id;lastDesktopTapAt=now;
+ }
+ return;
+}
+if(lastDesktopTapId){lastDesktopTapId=null;lastDesktopTapAt=0;}
+const selectedShortcut=$('.desktop-icon.selected');if(selectedShortcut)selectedShortcut.classList.remove('selected');
 const winbutton=e.target.closest('[data-win]');if(winbutton){windowAction(winbutton.dataset.win,winbutton.dataset.id);return}const task=e.target.closest('[data-task]');if(task){toggleTask(task.dataset.task);return}const open=e.target.closest('[data-open]');if(open){openWin(open.dataset.open);return}const chat=e.target.closest('[data-chat]');if(chat){openWin('chat',chat.dataset.chat);alerts=alerts.filter(n=>n.friendId!==chat.dataset.chat||n.kind==='invite');renderAlerts();return}const file=e.target.closest('[data-file]');if(file){const found=files.find(f=>f.name===file.dataset.file);if(found&&fileKind(found)==='image')openPersonalImage(found.name);else openWin('notepad',file.dataset.file);return}
  const wall=e.target.closest('[data-wallpaper]');if(wall){cfg.wallpaper=wall.dataset.wallpaper;saveSettings();$('#desktop').className='desktop wallpaper-'+cfg.wallpaper;refresh(wins.find(x=>x.id==='settings'));return}const calc=e.target.closest('[data-calc]');if(calc){calcPress(calc.dataset.calc);return}const a=e.target.closest('[data-action]');if(a){action(a.dataset.action,a);return}
 const w=e.target.closest('.window');if(w)activate(w.id.replace(/^win-/,''));else if(showStart&&!e.target.closest('.start-menu')){showStart=false;renderStart()}if(volumeOpen&&!e.target.closest('.volume-popover')&&!e.target.closest('.tray-speaker')){volumeOpen=false;renderVolumePanel()}if(windowToolsOpen&&!e.target.closest('.window-tools-panel')&&!e.target.closest('.window-tools-btn')){windowToolsOpen=false;renderWindowTools()}});
@@ -1549,7 +1577,7 @@ app.addEventListener('pointerdown',e=>{
   const y=Math.max(0,Math.min(ws.clientHeight-icon.offsetHeight,pos.y+dy));
   desktopIconPositions[id]={x,y};icon.style.left=x+'px';icon.style.top=y+'px';
  }
- function end(){clearTimeout(timer);icon.classList.remove('moving');if(holding){suppressIconClick=true;setTimeout(()=>{suppressIconClick=false},400)}icon.removeEventListener('pointermove',move);icon.removeEventListener('pointerup',end);icon.removeEventListener('pointercancel',end)}
+ function end(){clearTimeout(timer);icon.classList.remove('moving');if(holding){suppressIconClick=true;lastDesktopTapId=null;lastDesktopTapAt=0;setTimeout(()=>{suppressIconClick=false},400)}icon.removeEventListener('pointermove',move);icon.removeEventListener('pointerup',end);icon.removeEventListener('pointercancel',end)}
  icon.addEventListener('pointermove',move);icon.addEventListener('pointerup',end);icon.addEventListener('pointercancel',end);
 });
 app.addEventListener('pointerdown',e=>{if(state!=='desktop')return;const grip=e.target.closest('[data-resize]');
